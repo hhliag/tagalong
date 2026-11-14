@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import photo %}
+{% block title %}Card {{ chair.tag_id }} · TagAlong{% endblock %}
+{% block body_class %}print-page{% endblock %}
+{% block header %}
+<div class="print-toolbar no-print">
+  <a class="btn btn-ghost" href="/passport/{{ chair.chair_id }}">← Passport</a>
+  <button class="btn btn-gold" onclick="window.print()">Print (A5 landscape)</button>
+</div>
+{% endblock %}
+{% block content %}
+<article class="sheet">
+  <header class="sheet-head">
+    <div>
+      <p class="eyebrow">Wheelchair passport · Concept</p>
+      <h1>{{ v.name }}</h1>
+    </div>
+    <div class="sheet-tag"><span>Tag</span><b>{{ chair.tag_id }}</b></div>
+  </header>
+
+  <dl class="sheet-facts">
+    <div><dt>Weight</dt><dd>{{ v.facts.weight.text }}</dd></div>
+    <div><dt>Battery</dt><dd>{{ v.facts.battery_type.text }}</dd></div>
+    <div><dt>Watt-hours</dt><dd>{{ v.wh.text }}</dd></div>
+    <div><dt>Power off</dt><dd>{{ v.facts.power_off.text }}</dd></div>
+  </dl>
+
+  <div class="sheet-body">
+    <div class="sheet-left">
+      <div class="sheet-photos">
+        {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
+      </div>
+      <div class="sheet-foot">
+        <div class="qr">{{ qr|safe }}</div>
+        <p class="return-door">Return to the aircraft door</p>
+      </div>
+    </div>
+    <ol class="sheet-steps">
+      {% for s in v.must %}
+      <li>
+        <span class="step-num">{{ s.num }}</span>
+        <span>{% if s.label_n %}<span class="dot dot-inline confirmed">{{ s.label_n }}</span> {% endif %}{{ s.action }} <small>p.&nbsp;{{ s.source.page }}</small></span>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</article>
+{% endblock %}

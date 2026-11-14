@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import photo, sample_note %}
+{% block body_attrs %}data-chair="{{ chair.chair_id }}"{% endblock %}
+{% block crumbs %}<span class="crumb">Confirm</span>{% endblock %}
+{% block content %}
+<h1>Is each label on the right part?</h1>
+<p class="lead">Tap ✓ if the numbered dot sits on the part. Tap ✗ to hide it.</p>
+
+<div class="photos">
+  {% for p in photos %}{{ photo(chair.chair_id, p, parts, show_status=true) }}{% endfor %}
+</div>
+
+<ul class="decide-list">
+  {% for l in chair.labels %}
+  <li class="decide {{ l.status }}" id="row-{{ l.n }}">
+    <span class="dot dot-inline {{ l.status }}">{{ l.n }}</span>
+    <div class="decide-text">
+      <b>{{ parts[l.part_id].name.value }}</b>
+      <span>{{ parts[l.part_id].where }} · {{ l.photo.rsplit('.', 1)[0] }} photo</span>
+    </div>
+    <button class="btn-icon yes" data-n="{{ l.n }}" data-status="confirmed" aria-label="Confirm label {{ l.n }}">✓</button>
+    <button class="btn-icon no" data-n="{{ l.n }}" data-status="rejected" aria-label="Hide label {{ l.n }}">✗</button>
+  </li>
+  {% endfor %}
+</ul>
+
+<a id="done" class="btn btn-jade btn-big{% if chair.labels|selectattr('status', 'equalto', 'pending')|list %} disabled{% endif %}"
+   href="/passport/{{ chair.chair_id }}">Done</a>
+{{ sample_note() }}
+{% endblock %}
+{% block scripts %}<script src="/static/confirm.js"></script>{% endblock %}

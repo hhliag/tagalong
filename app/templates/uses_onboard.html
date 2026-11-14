@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block crumbs %}<span class="crumb">{{ use_title }}</span>{% endblock %}
+{% block content %}
+<p class="lead">What the owner would see on their phone. Nothing is sent.</p>
+<div class="phone">
+  <div class="phone-screen">
+    <p class="phone-time">14:05</p>
+    <div class="notice">
+      <p class="notice-app">TagAlong · now</p>
+      <p class="notice-title">Your wheelchair is on board.</p>
+      <p class="notice-body">{{ v.name }} · tag {{ chair.tag_id }}</p>
+    </div>
+  </div>
+</div>
+<p><a class="btn btn-ghost" href="/passport/{{ chair.chair_id }}">← Passport</a></p>
+{% endblock %}

@@ -1,0 +1,12 @@
+{
+  "chair_id": "chair-a",
+  "tag_id": "AP-7Q4K",
+  "record_id": "whill-model-c2",
+  "plate_read": { "make": "WHILL", "model": "Model C2", "raw": "WHILL Model C2" },
+  "battery_original": true,
+  "labels": [
+    { "part_id": "freewheel_lever", "n": 1, "photo": "left.jpg", "x": 0.42, "y": 0.71, "confidence": 0.8, "status": "pending" },
+    { "part_id": "battery", "n": 2, "photo": "rear.jpg", "x": 0.55, "y": 0.60, "confidence": 0.7, "status": "pending" }
+  ],
+  "removed_parts": []
+}

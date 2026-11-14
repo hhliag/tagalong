@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_links, fixture_note %}
+{% block crumbs %}<span class="crumb">{{ use_title }}</span>{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Check-in view · tag {{ chair.tag_id }}</p>
+  <h1>{{ v.name }}</h1>
+  <div class="ssr">
+    <span>SSR code</span>
+    <b>{{ v.ssr_text }}</b>
+  </div>
+  <table class="facts">
+    {% for key in ["battery_type", "voltage", "capacity", "wh", "removable", "power_off", "weight", "size", "removable_parts"] %}
+    {% set row = v.facts[key] %}
+    <tr>
+      <th>{{ row.label }}</th>
+      <td>{{ row.text }}
+        {% for c in row.cites if not c.verified %}<span class="chip chip-warn">Quote not found on page</span>{% endfor %}
+      </td>
+      <td class="links">{{ page_links(record.record_id, row.cites) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {{ fixture_note(record) }}
+</section>
+<p><a class="btn btn-ghost" href="/passport/{{ chair.chair_id }}">← Passport</a></p>
+{% endblock %}

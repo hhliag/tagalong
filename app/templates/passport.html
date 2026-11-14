@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_macros.html" import photo, step_item, sample_note, fixture_note %}
+{% block title %}{{ v.name }} · TagAlong{% endblock %}
+{% block crumbs %}<span class="crumb">Passport</span>{% endblock %}
+{% block content %}
+<section class="card passport">
+  <div class="passport-head">
+    <div>
+      <p class="eyebrow">Wheelchair passport</p>
+      <h1>{{ v.name }}</h1>
+    </div>
+    <span class="tag-id">{{ chair.tag_id }}</span>
+  </div>
+
+  <div class="photos">
+    {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
+  </div>
+  {% if v.hidden_count %}
+  <p class="hidden-line">{{ v.hidden_count }} label{{ 's' if v.hidden_count != 1 }} hidden (not confirmed by the owner).</p>
+  {% endif %}
+
+  <h2>Must do</h2>
+  {% for title, group in v.must_groups %}
+  <h3 class="phase">{{ title }}</h3>
+  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s) }}{% endfor %}</ol>
+  {% else %}
+  <p>No verified must-do steps.</p>
+  {% endfor %}
+
+  {% if v.more %}
+  <details class="more">
+    <summary>More from the manual ({{ v.more|length }})</summary>
+    <ul class="steps">{% for s in v.more %}{{ step_item(record.record_id, s, numbered=false) }}{% endfor %}</ul>
+  </details>
+  {% endif %}
+
+  {% if v.is_power %}
+  <div class="safety">
+    <h3>Every power chair</h3>
+    <ul>{% for line in v.safety_lines %}<li>{{ line }}</li>{% endfor %}</ul>
+    <p class="source">Source: {{ v.safety_source }}</p>
+  </div>
+  {% endif %}
+  {{ sample_note() }}
+  {{ fixture_note(record) }}
+</section>
+
+<h2 class="strip-title">Same passport, other uses</h2>
+<div class="strip">
+  <a class="card tile" href="/passport/{{ chair.chair_id }}/print"><span class="concept-mini">Concept</span><b>Printed card</b><span>A5 card for the chair</span></a>
+  <a class="card tile" href="/uses/{{ chair.chair_id }}/onboard"><span class="concept-mini">Concept</span><b>On board</b><span>Phone notice to the owner</span></a>
+  <a class="card tile" href="/uses/{{ chair.chair_id }}/checkin"><span class="concept-mini">Concept</span><b>Check-in</b><span>Battery facts and SSR code</span></a>
+  <a class="card tile" href="/uses/{{ chair.chair_id }}/return"><span class="concept-mini">Concept</span><b>Return check</b><span>Owner's checklist at arrival</span></a>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block crumbs %}<span class="crumb">Manual p. {{ page }}</span>{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">{{ record.make }} {{ record.model }} manual</p>
+  <h1>Page {{ page }}</h1>
+  <p class="manual-stub">The page image appears here once the manual PDF is loaded (next milestone).</p>
+  {% for title, cited, step_id in quotes %}
+  <blockquote class="quote{% if step_id and step_id == step %} marked{% endif %}">
+    <p>“{{ cited.quote }}”</p>
+    <footer>{{ title }}</footer>
+  </blockquote>
+  {% else %}
+  <p>Nothing on this page is quoted in the passport.</p>
+  {% endfor %}
+  {% if record.manual.url %}
+  <p><a href="{{ record.manual.url }}#page={{ page }}" rel="noopener">Open the maker's manual at page {{ page }}</a></p>
+  {% else %}
+  <p class="source">Official manual link: not added yet.</p>
+  {% endif %}
+</section>
+<p><a class="btn btn-ghost" href="javascript:history.back()">← Back</a></p>
+{% endblock %}

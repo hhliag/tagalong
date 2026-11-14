@@ -1,0 +1,43 @@
+{% macro photo(chair_id, p, parts, show_status=false) -%}
+<figure class="photo">
+  <div class="photo-frame">
+    <img src="/photo/{{ chair_id }}/{{ p.file }}" alt="{{ p.file }} view of the chair">
+    {% for l in p.labels %}
+    <span class="dot {{ l.status if show_status else 'confirmed' }}" id="dot-{{ l.n }}"
+          style="left: {{ (l.x * 100)|round(1) }}%; top: {{ (l.y * 100)|round(1) }}%"
+          title="{{ parts[l.part_id].name.value }}">{{ l.n }}</span>
+    {% endfor %}
+  </div>
+  <figcaption>{{ p.file.rsplit('.', 1)[0]|capitalize }} view</figcaption>
+</figure>
+{%- endmacro %}
+
+{% macro page_links(record_id, cites, step_id=none) -%}
+{% for c in cites if c.page %}<a class="page-link" href="/manual/{{ record_id }}/{{ c.page }}{% if step_id %}?step={{ step_id }}{% endif %}">p.&nbsp;{{ c.page }}</a>{% endfor %}
+{%- endmacro %}
+
+{% macro trust(step) -%}
+{% if step.verified %}<span class="chip chip-ai">AI-extracted · page verified</span>{% else %}<span class="chip chip-warn">Quote not found on page</span>{% endif %}
+{% if step.owner_confirmed %}<span class="chip chip-owner">Owner-confirmed</span>{% endif %}
+{%- endmacro %}
+
+{% macro step_item(record_id, s, numbered=true) -%}
+<li class="step">
+  {% if numbered %}<span class="step-num">{{ s.num }}</span>{% endif %}
+  <div class="step-body">
+    <p class="step-action">
+      {% if s.label_n %}<span class="dot dot-inline confirmed" title="Label on the photo">{{ s.label_n }}</span>{% endif %}
+      {{ s.action }}
+    </p>
+    <p class="step-meta">{{ trust(s) }} {{ page_links(record_id, [s.source], s.id) }}</p>
+  </div>
+</li>
+{%- endmacro %}
+
+{% macro sample_note() -%}
+<p class="sample-note">Sample photos. In real use the owner takes them.</p>
+{%- endmacro %}
+
+{% macro fixture_note(record) -%}
+{% if record.fixture_note %}<p class="fixture-note">{{ record.fixture_note }}</p>{% endif %}
+{%- endmacro %}

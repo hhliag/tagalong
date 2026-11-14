@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import sample_note %}
+{% block body_attrs %}data-chair="{{ chair.chair_id }}"{% endblock %}
+{% block crumbs %}<span class="crumb">Build</span>{% endblock %}
+{% block content %}
+<h1>Build the passport</h1>
+<p class="lead">{{ chair.chair_id|replace('-', ' ')|title }} · tag {{ chair.tag_id }}</p>
+<button id="go" class="btn btn-gold btn-big">Build the passport</button>
+
+<ol id="stages" class="stages" hidden>
+  <li class="stage waiting" id="st-plate"><span class="icon"></span><div><b>Read the model plate</b><span class="detail"></span></div><span class="tag"></span></li>
+  <li class="stage waiting" id="st-manual"><span class="icon"></span><div><b>Find the maker's manual</b><span class="detail"></span></div><span class="tag"></span></li>
+  <li class="stage waiting" id="st-extract"><span class="icon"></span><div><b>Copy the handling steps</b><span class="detail"></span></div><span class="tag"></span></li>
+  <li class="stage waiting" id="st-verify"><span class="icon"></span><div><b>Check every quote</b><span class="detail"></span></div><span class="tag"></span></li>
+  <li class="stage waiting" id="st-label"><span class="icon"></span><div><b>Place the parts on the photos</b><span class="detail"></span></div><span class="tag"></span></li>
+</ol>
+
+<div id="error-card" class="card error-card" hidden></div>
+<a id="next" class="btn btn-jade btn-big" href="/confirm/{{ chair.chair_id }}" hidden>Confirm the labels →</a>
+{{ sample_note() }}
+{% endblock %}
+{% block scripts %}<script src="/static/build.js"></script>{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block body_attrs %}data-chair="{{ chair.chair_id }}"{% endblock %}
+{% block crumbs %}<span class="crumb">{{ use_title }}</span>{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">At the aircraft door · tag {{ chair.tag_id }}</p>
+  <h1>Check your chair</h1>
+  <ul class="checklist">
+    {% for item in v.return_checks %}
+    <li><label><input type="checkbox"> {{ item }}</label></li>
+    {% else %}
+    <li>No confirmed labels yet.</li>
+    {% endfor %}
+  </ul>
+  <div class="return-buttons">
+    <button class="btn btn-jade" data-result="ok">All OK</button>
+    <button class="btn btn-ghost" data-result="problem">Problem with a part</button>
+  </div>
+  <p id="return-result" class="return-result" role="status"></p>
+  <p class="source">Your answer stays in this browser only.</p>
+</section>
+<p><a class="btn btn-ghost" href="/passport/{{ chair.chair_id }}">← Passport</a></p>
+{% endblock %}
+{% block scripts %}<script src="/static/return.js"></script>{% endblock %}

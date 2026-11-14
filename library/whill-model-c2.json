@@ -1,0 +1,59 @@
+{
+  "record_id": "whill-model-c2",
+  "make": "WHILL",
+  "model": "Model C2",
+  "aliases": ["Model C 2", "C2"],
+  "chair_type": "power_modular",
+  "fixture_note": "Hand-written M1 sample. Quotes, pages and figures are placeholders, not yet checked against the maker's manual.",
+  "manual": { "file": "whill-model-c2.pdf", "url": null, "sha256": null, "pages": 0 },
+  "parts": [
+    {
+      "id": "freewheel_lever",
+      "name": { "value": "Freewheel lever", "page": 24, "quote": "freewheel levers", "verified": true },
+      "where": "Rear of the base, one on each side",
+      "count": 2
+    },
+    {
+      "id": "battery",
+      "name": { "value": "Battery", "page": 30, "quote": "the battery", "verified": true },
+      "where": "Under the seat, at the rear of the base",
+      "count": 1
+    }
+  ],
+  "steps": [
+    {
+      "id": "s1", "phase": "before_loading", "part_id": null,
+      "action": "Turn the power off with the power button.",
+      "source": { "page": 22, "quote": "Press the power button to turn the power off.", "verified": true },
+      "safety": "injury", "must_do": true, "trust": "ai_extracted"
+    },
+    {
+      "id": "s2", "phase": "before_loading", "part_id": "freewheel_lever",
+      "action": "Pull both freewheel levers to switch to manual mode.",
+      "source": { "page": 24, "quote": "Pull the freewheel levers on both sides to switch to manual mode.", "verified": true },
+      "safety": "injury", "must_do": true, "trust": "ai_extracted"
+    },
+    {
+      "id": "s3", "phase": "at_arrival", "part_id": "battery",
+      "action": "Make sure the battery is locked before driving.",
+      "source": { "page": 30, "quote": "Make sure the battery is locked in place before driving.", "verified": true },
+      "safety": "damage", "must_do": false, "trust": "ai_extracted"
+    }
+  ],
+  "facts": {
+    "battery_chemistry": { "value": "Lithium-ion", "page": 61, "quote": "Battery type: Lithium-ion", "verified": true },
+    "voltage_v": { "value": 25.2, "page": 61, "quote": "Nominal voltage: 25.2 V", "verified": true },
+    "capacity_ah": { "value": 10.8, "page": 61, "quote": "Capacity: 10.8 Ah", "verified": true },
+    "wh_each": { "value": null, "page": null, "quote": null, "verified": false },
+    "battery_removable": { "value": true, "page": 30, "quote": "The battery can be removed from the vehicle.", "verified": true },
+    "power_off_method": { "value": "Press the power button", "page": 22, "quote": "Press the power button to turn the power off.", "verified": true },
+    "weight_kg": { "value": 52, "page": 61, "quote": "Weight (with battery): 52 kg", "verified": true },
+    "dimensions": { "value": "985 × 554 × 743 mm (L × W × H)", "page": 61, "quote": "Dimensions: 985 x 554 x 743 mm", "verified": true },
+    "removable_parts": [
+      { "value": "Battery", "page": 30, "quote": "The battery can be removed from the vehicle.", "verified": true }
+    ]
+  },
+  "derived": { "wh_computed": null, "ssr_code": null },
+  "missing": ["wh_each"],
+  "built_at": "2026-11-14T00:00:00Z"
+}
