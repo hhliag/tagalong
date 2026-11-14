@@ -13,7 +13,7 @@ document.querySelectorAll(".decide button").forEach((btn) => {
     if (!res.ok) return;
     const data = await res.json();
     document.getElementById("row-" + n).className = "decide " + status;
-    document.querySelectorAll(`#row-${n} .dot, #dot-${n}`).forEach((d) => {
+    document.querySelectorAll(`#row-${n} .dot, #row-${n} .zone-mark, #dot-${n}, #box-${n}`).forEach((d) => {
       d.classList.remove("pending", "confirmed", "rejected");
       d.classList.add(status);
     });

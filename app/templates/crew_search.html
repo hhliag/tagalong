@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Crew lookup · TagAlong{% endblock %}
+{% block crumbs %}<span class="crumb">Crew</span>{% endblock %}
+{% block content %}
+<h1>Crew lookup</h1>
+<p class="lead">Find how to handle a wheelchair: where to lift it, what not to hold, and what to do before loading.</p>
+
+<section class="card crew-how">
+  <h2>Scan the QR</h2>
+  <p>Point the phone camera at the QR on the chair's printed card. It opens this chair's crew view.</p>
+</section>
+
+<section class="card crew-how">
+  <h2>Or type the tag ID</h2>
+  <form class="tag-form" action="/crew" method="get">
+    <label for="tag" class="sr-only">Tag ID</label>
+    <input id="tag" name="tag" value="{{ tag or '' }}" placeholder="e.g. AP-7Q4K" autocomplete="off"
+           autocapitalize="characters" spellcheck="false" required>
+    <button class="btn btn-gold" type="submit">Find</button>
+  </form>
+  {% if not_found %}<p class="not-found" role="alert">No chair with tag “{{ tag }}”. Check the tag on the card.</p>{% endif %}
+</section>
+{% endblock %}

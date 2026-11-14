@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import photo, step_item, handling_box, page_links %}
+{% block title %}Crew · {{ chair.tag_id }} · TagAlong{% endblock %}
+{% block crumbs %}<a class="crumb" href="/crew">Crew</a>{% endblock %}
+{% block content %}
+<section class="card passport">
+  <div class="passport-head">
+    <div>
+      <p class="eyebrow">Crew view</p>
+      <h1>{{ v.name }}</h1>
+    </div>
+    <span class="tag-id">{{ chair.tag_id }}</span>
+  </div>
+
+  {{ handling_box(record.record_id, v.handling) }}
+
+  <div class="photos">
+    {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
+  </div>
+  {% if v.hidden_count %}
+  <p class="hidden-line">{{ v.hidden_count }} label{{ 's' if v.hidden_count != 1 }} hidden (not confirmed by the owner).</p>
+  {% endif %}
+
+  <h2>Must do</h2>
+  {% for title, group in v.must_groups %}
+  <h3 class="phase">{{ title }}</h3>
+  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s) }}{% endfor %}</ol>
+  {% else %}
+  <p>No verified must-do steps.</p>
+  {% endfor %}
+
+  <h2>Battery and size</h2>
+  <div class="ssr"><span>SSR code</span><b>{{ v.ssr_text }}</b></div>
+  <table class="facts">
+    {% for key in ["battery_type", "wh", "removable", "power_off", "weight", "size"] %}{% set row = v.facts[key] %}
+    <tr><th>{{ row.label }}</th><td>{{ row.text }}</td><td class="links">{{ page_links(record.record_id, row.cites) }}</td></tr>
+    {% endfor %}
+  </table>
+
+  {% if v.is_power %}
+  <div class="safety">
+    <h3>Every power chair</h3>
+    <ul>{% for line in v.safety_lines %}<li>{{ line }}</li>{% endfor %}</ul>
+    <p class="source">Source: {{ v.safety_source }}</p>
+  </div>
+  {% endif %}
+  <p class="source">Return the chair to the aircraft door. <a href="/passport/{{ chair.chair_id }}">Full passport</a></p>
+</section>
+{% endblock %}

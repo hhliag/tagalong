@@ -44,6 +44,18 @@
   .safety { margin-top: 16px; border-left: 4px solid var(--gold); padding: 4px 0 4px 12px; }
   .safety ul { padding-left: 18px; margin: 4px 0; }
   .small { color: var(--soft); font-size: .85rem; }
+  .handling { margin: 16px 0; padding: 12px; border-radius: 12px; background: var(--card); }
+  .handling h2 { margin-top: 0; }
+  .handling h3 { display: flex; gap: 8px; align-items: center; margin: 10px 0 4px; text-transform: none; font-size: .95rem; }
+  .hold-title { color: #81C995 !important; } .no-hold-title { color: #f28b82 !important; }
+  .zl { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  .zl li { padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,.18); }
+  .zl.hold li { border-left: 4px solid #1E8E3E; } .zl.no_hold li { border-left: 4px solid #C5221F; }
+  .zm { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 2px solid #fff; color: #fff;
+        font-weight: 700; font-size: .8rem; vertical-align: middle; }
+  .zm.hold { background: #1E8E3E; border-radius: 50%; } .zm.no_hold { background: #C5221F; border-radius: 6px; }
+  .legend { margin: 4px 0 0; font-size: .8rem; color: var(--soft); display: flex; gap: 6px; align-items: center; }
+  .no-lift { font-weight: 700; color: var(--warn); }
   @media (max-width: 480px) {
     .photos { grid-template-columns: 1fr; }
     th, td { display: block; border: 0; padding: 2px 0; width: auto; }
@@ -66,7 +78,8 @@
 
   <div class="photos">
     {% for p in photos %}
-    <figure><img src="{{ p.src }}" alt="{{ p.name }} with numbered labels"><figcaption>{{ p.name.rsplit('.', 1)[0]|replace('_', ' ')|capitalize }}</figcaption></figure>
+    <figure><img src="{{ p.src }}" alt="{{ p.name }} with numbered labels"><figcaption>{{ p.name.rsplit('.', 1)[0]|replace('_', ' ')|capitalize }}</figcaption>
+      {% if p.zones %}<p class="legend"><span class="zm hold">✓</span> Lift here <span class="zm no_hold">✗</span> Do not hold</p>{% endif %}</figure>
     {% endfor %}
   </div>
 
@@ -81,6 +94,24 @@
     </tr>
     {% endfor %}
   </table>
+
+  {% set h = v.handling %}
+  {% if h %}
+  <section class="handling">
+    <h2>How to hold this chair</h2>
+    {% if h.hold %}
+    <h3 class="hold-title"><span class="zm hold">✓</span> Lift here</h3>
+    <ul class="zl hold">{% for z in h.hold %}<li><b>{{ z.part_name }}</b> · {{ z.reason }}
+      <p class="meta"><span class="chip chip-ai">AI-extracted · page verified</span><span class="pg">p.&nbsp;{{ z.source.page }}</span></p></li>{% endfor %}</ul>
+    {% endif %}
+    {% if h.no_lift_points %}<p class="no-lift">The manual gives no lifting points. Ask the owner.</p>{% endif %}
+    {% if h.no_hold %}
+    <h3 class="no-hold-title"><span class="zm no_hold">✗</span> Do not lift by</h3>
+    <ul class="zl no_hold">{% for z in h.no_hold %}<li><b>{{ z.part_name }}</b> · {{ z.reason }}
+      <p class="meta"><span class="chip chip-ai">AI-extracted · page verified</span><span class="pg">p.&nbsp;{{ z.source.page }}</span></p></li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+  {% endif %}
 
   <h2>Must do</h2>
   {% for title, group in v.must_groups %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import photo %}
+{% from "_macros.html" import photo, legend %}
 {% block title %}Card {{ chair.tag_id }} · TagAlong{% endblock %}
 {% block body_class %}print-page{% endblock %}
 {% block header %}
@@ -28,21 +28,37 @@
   <div class="sheet-body">
     <div class="sheet-left">
       <div class="sheet-photos">
-        {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
+        {% for p in v.photos[:2] %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
       </div>
       <div class="sheet-foot">
-        <div class="qr">{{ qr|safe }}</div>
+        <div class="qr">{{ qr|safe }}<span>Crew: scan</span></div>
         <p class="return-door">Return to the aircraft door</p>
       </div>
     </div>
-    <ol class="sheet-steps">
-      {% for s in v.must %}
-      <li>
-        <span class="step-num">{{ s.num }}</span>
-        <span>{% if s.label_n %}<span class="dot dot-inline confirmed">{{ s.label_n }}</span> {% endif %}{{ s.action }} <small>p.&nbsp;{{ s.source.page }}</small></span>
-      </li>
-      {% endfor %}
-    </ol>
+    <div class="sheet-right">
+      {% set h = v.handling %}
+      {% if h %}
+      <div class="sheet-zones">
+        {% if h.hold %}
+        <p class="sz-title"><span class="zone-mark hold confirmed inline"></span> Lift here</p>
+        <ul>{% for z in h.hold[:3] %}<li>{{ z.part_name }} <small>p.&nbsp;{{ z.source.page }}</small></li>{% endfor %}</ul>
+        {% endif %}
+        {% if h.no_lift_points %}<p class="sz-none">The manual gives no lifting points. Ask the owner.</p>{% endif %}
+        {% if h.no_hold %}
+        <p class="sz-title"><span class="zone-mark no_hold confirmed inline"></span> Do not lift by</p>
+        <ul>{% for z in h.no_hold[:3] %}<li>{{ z.part_name }} <small>p.&nbsp;{{ z.source.page }}</small></li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+      {% endif %}
+      <ol class="sheet-steps">
+        {% for s in v.must %}
+        <li>
+          <span class="step-num">{{ s.num }}</span>
+          <span>{% if s.label_n %}<span class="dot dot-inline confirmed">{{ s.label_n }}</span> {% endif %}{{ s.action }} <small>p.&nbsp;{{ s.source.page }}</small></span>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
   </div>
 </article>
 {% endblock %}

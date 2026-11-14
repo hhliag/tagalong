@@ -54,6 +54,18 @@ def chair(chair_id):
     return data
 
 
+def find_chair_by_tag(tag):
+    """Chair by its tag ID (case and spaces ignored); the chair id also works."""
+    def key(s):
+        return re.sub(r"[^A-Z0-9]", "", (s or "").upper())
+
+    for cid in chair_ids():
+        c = chair(cid)
+        if key(tag) in (key(c["tag_id"]), key(cid)):
+            return c
+    return None
+
+
 def save_chair(data):
     config.STATE_DIR.mkdir(parents=True, exist_ok=True)
     path = config.STATE_DIR / f"{data['chair_id']}.json"

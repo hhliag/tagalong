@@ -57,6 +57,10 @@ The app listens on `0.0.0.0:8000`.
 
 Stop the tunnel with Ctrl-C when you are done: anyone with the link can open the app.
 
+## Crew lookup
+
+`/crew` lets ground crew find a chair by its tag ID, and the QR on the printed card opens `/crew/<tag_id>` straight from the phone camera. The crew view leads with "How to hold this chair", then the photos with confirmed labels, the must-do steps, battery facts and the IATA lines. Every page has a "Crew lookup" link in the top bar.
+
 ## Print the card
 
 Open `/passport/chair-a/print` in Chrome → **Print**. The page sets A5 landscape with no margins. If Chrome shows headers or footers, untick "Headers and footers" under More settings.
@@ -64,7 +68,7 @@ Open `/passport/chair-a/print` in Chrome → **Print**. The page sets A5 landsca
 ## Pipeline: photos + manual → labelled passport
 
 ```
-python -m pipeline <chair_id> [--stage pages|extract|label|render|all]
+python -m pipeline <chair_id> [--stage pages|extract|handling|label|render|all]
                               [--provider gemini|anthropic|openai|offline] [--model NAME]
 ```
 
@@ -93,12 +97,15 @@ tag_id: AP-7Q4K                # optional: otherwise made from the chair id
 | --- | --- | --- | --- |
 | `pages` | no | meta.yaml, the PDF | `out/<chair>/pages.json` |
 | `extract` | 1 text call | pages.json | `out/<chair>/record.json`, `library/<record_id>.json` |
-| `label` | 1 vision call per photo | record.json, photos | `out/<chair>/device.json`, `detections.json`, `devices/<chair>.json` |
+| `handling` | 1 text call | pages.json, record.json | hold / no_hold zones into `record.json` and `library/`; `out/<chair>/handling.json` (dropped zones) |
+| `label` | 1 vision call per photo | record.json, photos | part + zone labels in `out/<chair>/device.json`, `detections.json`, `devices/<chair>.json` |
 | `render` | no | all of the above | `out/<chair>/labelled_<view>.png`, `card.html`, `REPORT.md` |
 
 Every result is also copied to `saved/<chair>/`. Each stage reads the previous stage's file, so you can rerun one stage alone. Every LLM request and reply is logged in `out/<chair>/llm_log/`.
 
 Once `library/<record_id>.json` and `devices/<chair>.json` exist, the web app uses them instead of the hand-written M1 records in `app/fixtures/` (no restart needed). The label stage also clears that chair's ✓/✗ decisions, since they were about the old labels.
+
+**Handling zones.** The `handling` stage keeps only sentences where the manual says where to lift or hold the chair, or what not to hold. A zone whose quote is not found is dropped completely. On the photos, a green circle with ✓ means "lift here" and a red rounded square with ✗ (hatched box) means "do not hold"; the shapes differ, so they read in black and white. The owner confirms zones on /confirm like labels; only confirmed zones reach the passport, the print and the crew view.
 
 ### With an API key
 

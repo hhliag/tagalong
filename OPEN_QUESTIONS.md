@@ -50,3 +50,14 @@ Where DESIGN.md was unclear, the simplest option was chosen and noted here. Chan
 38. **Language on the card.** Quotes and actions stay in the manual's language (Chinese here): translating would be generating, against the core rule. Values (facts, part names) are short English. For English-speaking judges, an English action would need a translation step, marked as such. Not built.
 39. **Gemini on Vertex AI.** With `GOOGLE_GENAI_USE_VERTEXAI=True`, the client uses `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` and the gcloud login instead of `GEMINI_API_KEY`.
 40. **Timeout.** The live extract call took 39 s against the 40 s default `STAGE_TIMEOUT`. Set `STAGE_TIMEOUT=90` in `.env` for the pipeline.
+
+## Handling zones and crew lookup (14 Nov 2026)
+
+41. **Zone labels.** Each verified zone gets one label (`zone`: hold / no_hold, plus `zone_id` and `box`), numbered after the part labels so /confirm can use the same ✓/✗ API. A zone whose part is not visible in any photo still gets a label with `photo: null`; the owner confirms it from the list, and it has no marker. (The E100's lifting straps sit under the seat cushion, so this happens on the first real run.)
+42. **"Only confirmed zones" on /passport, /print and the crew view;** the pipeline's `card.html` shows pending zones, because nothing is confirmed when it is made (it already says "Labels not yet confirmed by the owner").
+43. **"The manual gives no lifting points. Ask the owner."** shows when the record has no verified hold zone, also when it has no_hold zones. `handling_missing` is true when no zone survives verification.
+44. **Zone parts get part labels too.** A part that the handling stage adds (e.g. armrest) is a normal part, so it also gets a gold number when visible, as the spec says ("a part label stays as it is"). Zones are drawn under the numbers.
+45. **Markers in the web pages are HTML** (like the part dots); the PNGs use Pillow drawing. Check and cross are drawn as lines in the PNGs, because the default font has no ✓ / ✗.
+46. **The handling stage reads `record.json`, so rerun handling after extract** (`--stage all` does). Dropped zones and conflicts are kept in `out/<chair>/handling.json` for the report, not in the library record.
+47. **Crew lookup (asked for in chat, not in DESIGN).** `/crew` takes a tag ID (case and spaces ignored); `/crew/{tag_id}` is the crew view: how to hold, photos, must do, battery and size, IATA lines. The QR on the printed card now opens `/crew/{tag_id}` instead of `/passport/{chair_id}` (§6), labelled "Crew: scan". Scanning uses the phone's own camera app; there is no in-page scanner. §10 lists an "inspector page" as out of scope; this is a read-only view of the same record.
+48. **Timeout.** The handling call on the E100 manual (17 pages) took 60 s and failed once with 504 at 90 s; it worked with `STAGE_TIMEOUT=180`.

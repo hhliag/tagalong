@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import photo, step_item, sample_note, fixture_note %}
+{% from "_macros.html" import photo, step_item, sample_note, fixture_note, handling_box %}
 {% block title %}{{ v.name }} · TagAlong{% endblock %}
 {% block crumbs %}<span class="crumb">Passport</span>{% endblock %}
 {% block content %}
@@ -18,6 +18,8 @@
   {% if v.hidden_count %}
   <p class="hidden-line">{{ v.hidden_count }} label{{ 's' if v.hidden_count != 1 }} hidden (not confirmed by the owner).</p>
   {% endif %}
+
+  {{ handling_box(record.record_id, v.handling) }}
 
   <h2>Must do</h2>
   {% for title, group in v.must_groups %}
@@ -47,6 +49,7 @@
 
 <h2 class="strip-title">Same passport, other uses</h2>
 <div class="strip">
+  <a class="card tile" href="/crew/{{ chair.tag_id }}"><span class="concept-mini">Concept</span><b>Crew view</b><span>What the QR on the card opens</span></a>
   <a class="card tile" href="/passport/{{ chair.chair_id }}/print"><span class="concept-mini">Concept</span><b>Printed card</b><span>A5 card for the chair</span></a>
   <a class="card tile" href="/uses/{{ chair.chair_id }}/onboard"><span class="concept-mini">Concept</span><b>On board</b><span>Phone notice to the owner</span></a>
   <a class="card tile" href="/uses/{{ chair.chair_id }}/checkin"><span class="concept-mini">Concept</span><b>Check-in</b><span>Battery facts and SSR code</span></a>

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import segno
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -62,13 +62,15 @@ def build(request: Request, chair_id: str):
 def confirm(request: Request, chair_id: str):
     chair = _chair(chair_id)
     record = _record(chair["record_id"])
-    labels = chair["labels"]
+    part_labels, zone_labels = view.split_labels(chair)
     # All four views, so the owner sees the whole chair; then any close-up that carries a label.
-    files = CONFIRM_VIEWS + sorted({l["photo"] for l in labels} - set(CONFIRM_VIEWS))
+    files = CONFIRM_VIEWS + sorted({l["photo"] for l in chair["labels"] if l["photo"]} - set(CONFIRM_VIEWS))
+    zones = {z["id"]: z for z in record.get("handling") or []}
     return _page(
-        request, "confirm.html", chair=chair,
+        request, "confirm.html", chair=chair, part_labels=part_labels, zone_labels=zone_labels, zones=zones,
         parts={p["id"]: p for p in record["parts"]},
-        photos=[{"file": f, "labels": [l for l in labels if l["photo"] == f]} for f in files],
+        photos=[{"file": f, "labels": [l for l in part_labels if l["photo"] == f],
+                 "zones": [z for z in zone_labels if z["photo"] == f]} for f in files],
     )
 
 
@@ -77,11 +79,35 @@ def passport(request: Request, chair_id: str):
     return _page(request, "passport.html", **_passport_ctx(chair_id))
 
 
+def crew_url(request, chair):
+    """What the QR on the printed card opens: the crew view, found by the tag ID printed next to it."""
+    base = config.PUBLIC_URL or str(request.base_url).rstrip("/")
+    return f"{base}/crew/{chair['tag_id']}"
+
+
 @app.get("/passport/{chair_id}/print")
 def passport_print(request: Request, chair_id: str):
-    base = config.PUBLIC_URL or str(request.base_url).rstrip("/")
-    qr = segno.make(f"{base}/passport/{chair_id}", error="m").svg_inline(dark="#044B52", omitsize=True)
-    return _page(request, "print.html", qr=qr, **_passport_ctx(chair_id))
+    ctx = _passport_ctx(chair_id)
+    qr = segno.make(crew_url(request, ctx["chair"]), error="m").svg_inline(dark="#044B52", omitsize=True)
+    return _page(request, "print.html", qr=qr, **ctx)
+
+
+@app.get("/crew")
+def crew_search(request: Request, tag: str | None = None):
+    """Crew lookup: scan the QR on the chair's card, or type the tag ID."""
+    if tag:
+        chair = store.find_chair_by_tag(tag)
+        if chair:
+            return RedirectResponse(f"/crew/{chair['tag_id']}", status_code=303)
+    return _page(request, "crew_search.html", tag=tag, not_found=bool(tag))
+
+
+@app.get("/crew/{tag_id}")
+def crew_view(request: Request, tag_id: str):
+    chair = store.find_chair_by_tag(tag_id)
+    if chair is None:
+        return _page(request, "crew_search.html", tag=tag_id, not_found=True)
+    return _page(request, "crew.html", **_passport_ctx(chair["chair_id"]))
 
 
 @app.get("/uses/{chair_id}/{use}")
@@ -103,6 +129,8 @@ def manual_page(request: Request, record_id: str, page: int, step: str | None = 
     for key, cited in record["facts"].items():
         for c in cited if isinstance(cited, list) else [cited]:
             quotes.append((key.replace("_", " ").capitalize(), c, None))
+    for z in record.get("handling") or []:
+        quotes.append((f"{'Lift here' if z['kind'] == 'hold' else 'Do not lift by'}: {z['reason']}", z["source"], z["id"]))
     quotes = [q for q in quotes if q[1].get("page") == page]
     return _page(request, "manual.html", record=record, page=page, step=step, quotes=quotes)
 

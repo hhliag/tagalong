@@ -16,7 +16,15 @@ def test_box_2d_to_centre_fractions():
 def test_xy_fractions_and_clamping():
     assert label.to_xy({"x": 0.25, "y": 0.75}) == (0.25, 0.75)
     assert label.to_xy({"x": 1.4, "y": -0.2}) == (1.0, 0.0)
-    assert label.to_xy({"box_2d": [0, 900, 1200, 1300]}) == (1.0, 0.6)
+    # the box is clamped to the photo first, then its centre is the point
+    assert label.to_xy({"box_2d": [0, 900, 1200, 1300]}) == (0.95, 0.5)
+
+
+def test_boxes_from_both_formats():
+    assert label.to_box({"box_2d": [100, 200, 300, 600]}) == [0.2, 0.1, 0.6, 0.3]
+    assert label.to_box({"x": 0.5, "y": 0.5, "box": [0.6, 0.1, 0.4, 0.3]}) == [0.4, 0.1, 0.6, 0.3]
+    assert label.to_xy({"x": 0.9, "y": 0.9, "box": [0.4, 0.1, 0.6, 0.3]}) == (0.5, 0.2)   # box centre wins
+    assert label.to_box({"x": 0.5, "y": 0.5}) is None
 
 
 def test_missing_location_is_not_visible():

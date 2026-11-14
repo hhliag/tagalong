@@ -2,6 +2,17 @@
 <figure class="photo">
   <div class="photo-frame">
     <img src="/photo/{{ chair_id }}/{{ p.file }}" alt="{{ p.file }} view of the chair">
+    {# Zones first, so the part numbers sit on top #}
+    {% for z in p.zones or [] %}
+    {% set st = z.status if show_status else 'confirmed' %}
+    {% if z.box %}
+    <span class="zone-box {{ z.zone }} {{ st }}" id="box-{{ z.n }}"
+          style="left: {{ (z.box[0] * 100)|round(1) }}%; top: {{ (z.box[1] * 100)|round(1) }}%; width: {{ ((z.box[2] - z.box[0]) * 100)|round(1) }}%; height: {{ ((z.box[3] - z.box[1]) * 100)|round(1) }}%"></span>
+    {% endif %}
+    <span class="zone-mark {{ z.zone }} {{ st }}" id="dot-{{ z.n }}"
+          style="left: {{ (z.x * 100)|round(1) }}%; top: {{ (z.y * 100)|round(1) }}%"
+          title="{{ 'Lift here' if z.zone == 'hold' else 'Do not hold' }}: {{ parts[z.part_id].name.value }}"></span>
+    {% endfor %}
     {% for l in p.labels %}
     <span class="dot {{ l.status if show_status else 'confirmed' }}" id="dot-{{ l.n }}"
           style="left: {{ (l.x * 100)|round(1) }}%; top: {{ (l.y * 100)|round(1) }}%"
@@ -9,7 +20,45 @@
     {% endfor %}
   </div>
   <figcaption>{{ p.file.rsplit('.', 1)[0]|capitalize }} view</figcaption>
+  {% if p.zones %}{{ legend() }}{% endif %}
 </figure>
+{%- endmacro %}
+
+{% macro legend() -%}
+<p class="zone-legend"><span class="zone-mark hold confirmed inline"></span> Lift here
+  <span class="zone-mark no_hold confirmed inline"></span> Do not hold</p>
+{%- endmacro %}
+
+{% macro handling_box(record_id, h, limit=none) -%}
+{% if h %}
+<section class="handling">
+  <h2>How to hold this chair</h2>
+  {% if h.hold %}
+  <h3 class="hold-title"><span class="zone-mark hold confirmed inline"></span> Lift here</h3>
+  <ul class="zone-list hold">
+    {% for z in (h.hold[:limit] if limit else h.hold) %}{{ zone_item(record_id, z) }}{% endfor %}
+  </ul>
+  {% endif %}
+  {% if h.no_lift_points %}<p class="no-lift">The manual gives no lifting points. Ask the owner.</p>{% endif %}
+  {% if h.no_hold %}
+  <h3 class="no-hold-title"><span class="zone-mark no_hold confirmed inline"></span> Do not lift by</h3>
+  <ul class="zone-list no_hold">
+    {% for z in (h.no_hold[:limit] if limit else h.no_hold) %}{{ zone_item(record_id, z) }}{% endfor %}
+  </ul>
+  {% endif %}
+  {% if h.hidden_count %}
+  <p class="hidden-line">{{ h.hidden_count }} handling zone{{ 's' if h.hidden_count != 1 }} hidden (not confirmed by the owner).</p>
+  {% endif %}
+</section>
+{% endif %}
+{%- endmacro %}
+
+{% macro zone_item(record_id, z) -%}
+<li>
+  <b>{{ z.part_name }}</b> · {{ z.reason }}
+  <span class="step-meta"><span class="chip chip-ai">AI-extracted · page verified</span>{% if z.owner_confirmed %}<span class="chip chip-owner">Owner-confirmed</span>{% endif %}
+  <a class="page-link" href="/manual/{{ record_id }}/{{ z.source.page }}?step={{ z.id }}">p.&nbsp;{{ z.source.page }}</a></span>
+</li>
 {%- endmacro %}
 
 {% macro page_links(record_id, cites, step_id=none) -%}

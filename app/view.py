@@ -26,25 +26,65 @@ def chair_name(chair):
     return f"{plate['make']} {plate['model']}"
 
 
-def photos_with_labels(chair, labels, count):
-    """Photos that carry the given labels first (in label order), then the default views, up to `count`."""
+MAX_PRINT_ZONES = 3
+NO_LIFT_POINTS = "The manual gives no lifting points. Ask the owner."
+
+
+def split_labels(chair):
+    """(part labels, zone labels). Zone labels are the hold / no_hold markers (DESIGN handling zones)."""
+    labels = chair["labels"]
+    return [l for l in labels if not l.get("zone")], [l for l in labels if l.get("zone")]
+
+
+def photos_with_labels(chair, labels, count, zones=()):
+    """Photos that carry the given labels or zones first (in label order), then the default views, up to `count`."""
     files = []
-    for label in sorted(labels, key=lambda l: l["n"]):
-        if label["photo"] not in files:
+    for label in sorted([*labels, *zones], key=lambda l: l["n"]):
+        if label["photo"] and label["photo"] not in files:
             files.append(label["photo"])
     for f in DEFAULT_PHOTOS:
         if f not in files:
             files.append(f)
-    return [{"file": f, "labels": [l for l in labels if l["photo"] == f]} for f in files[:count]]
+    return [{"file": f, "labels": [l for l in labels if l["photo"] == f],
+             "zones": [z for z in zones if z["photo"] == f]} for f in files[:count]]
+
+
+def handling(record, zone_labels, include_pending=False):
+    """The "How to hold this chair" box. Only zones the owner confirmed (or pending ones, for the pipeline card).
+
+    None when the record has no handling data at all (made before the handling stage existed).
+    """
+    if "handling" not in record:
+        return None
+    parts = {p["id"]: p for p in record["parts"]}
+    by_zone = {l.get("zone_id"): l for l in zone_labels}
+    shown_status = ("confirmed", "pending") if include_pending else ("confirmed",)
+    items = {"hold": [], "no_hold": []}
+    for z in record["handling"]:
+        label = by_zone.get(z["id"])
+        if label is None or label["status"] not in shown_status:
+            continue
+        items[z["kind"]].append({**z, "part_name": parts[z["part_id"]]["name"]["value"],
+                                 "owner_confirmed": label["status"] == "confirmed"})
+    shown = len(items["hold"]) + len(items["no_hold"])
+    return {
+        "hold": items["hold"],
+        "no_hold": items["no_hold"],
+        "no_lift_points": not any(z["kind"] == "hold" for z in record["handling"]),
+        "hidden_count": len(record["handling"]) - shown,
+    }
 
 
 def passport(chair, record, include_pending=False):
     """include_pending: number steps by pending labels too (the pipeline's card, before the owner confirms)."""
     parts = {p["id"]: p for p in record["parts"]}
-    confirmed = [l for l in chair["labels"] if l["status"] == "confirmed"]
-    numbered = [l for l in chair["labels"] if l["status"] != "rejected"] if include_pending else confirmed
+    part_labels, zone_labels = split_labels(chair)
+    confirmed = [l for l in part_labels if l["status"] == "confirmed"]
+    numbered = [l for l in part_labels if l["status"] != "rejected"] if include_pending else confirmed
     label_n = {l["part_id"]: l["n"] for l in numbered}
     confirmed_parts = {l["part_id"] for l in confirmed}
+    shown_zones = [z for z in zone_labels if z["photo"] and
+                   (z["status"] == "confirmed" or (include_pending and z["status"] == "pending"))]
     phase_order = {key: i for i, (key, _) in enumerate(PHASES)}
 
     steps = []
@@ -73,8 +113,11 @@ def passport(chair, record, include_pending=False):
         "name": f"{record['make']} {record['model']}",
         "parts": parts,
         "confirmed": confirmed,
-        "hidden_count": len(chair["labels"]) - len(confirmed),
-        "photos": photos_with_labels(chair, confirmed, 2),
+        "hidden_count": len(part_labels) - len(confirmed),
+        # Every photo that carries a confirmed marker (at least 2); the A5 print shows the first 2.
+        "photos": photos_with_labels(chair, confirmed, max(2, len({l["photo"] for l in confirmed + shown_zones})),
+                                     shown_zones),
+        "handling": handling(record, zone_labels, include_pending),
         "must": must,
         "must_groups": [(t, g) for t, g in must_groups if g],
         "more": [s for s in steps if s["id"] not in must_ids],

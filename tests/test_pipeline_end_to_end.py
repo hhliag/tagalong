@@ -21,6 +21,8 @@ HANDLING = {"handling": [
 
 LABELS = {  # offline label responses, one per photo: left, right, front, rear
     1: {"parts": [{"part_id": "freewheel_lever", "visible": True, "confidence": 0.9, "x": 0.3, "y": 0.6},
+                  {"part_id": "armrest", "visible": True, "confidence": 0.7, "x": 0.6, "y": 0.4,
+                   "box": [0.5, 0.35, 0.7, 0.45]},
                   {"part_id": "battery", "visible": False, "confidence": 0.1}]},
     2: {"parts": [{"part_id": "freewheel_lever", "visible": True, "confidence": 0.5, "x": 0.7, "y": 0.6}]},
     3: {"parts": []},
@@ -49,8 +51,11 @@ def test_offline_run_end_to_end(capsys):
 
     device = json.loads((config.DEVICES_DIR / "chair-t.json").read_text())
     assert device["plate_read"]["raw"] == "from sample data"
-    assert [(l["part_id"], l["n"], l["photo"]) for l in device["labels"]] == [
-        ("freewheel_lever", 1, "left.jpg"), ("battery", 2, "rear.jpg")]
+    assert [(l["part_id"], l["n"], l["photo"]) for l in device["labels"] if not l["zone"]] == [
+        ("freewheel_lever", 1, "left.jpg"), ("battery", 2, "rear.jpg"), ("armrest", 3, "left.jpg")]
+    # one zone label per verified zone; the made-up "seat" zone was dropped; armrest seen on the left photo
+    zones = [(l["zone"], l["part_id"], l["photo"], l["status"]) for l in device["labels"] if l["zone"]]
+    assert zones == [("hold", "seat_frame", None, "pending"), ("no_hold", "armrest", "left.jpg", "pending")]
 
     for view in ("left", "right", "front", "rear"):
         with Image.open(out / f"labelled_{view}.png") as im:
@@ -66,7 +71,11 @@ def test_offline_run_end_to_end(capsys):
     assert "≈ 272 Wh (computed, not a manual figure)" in card
     assert 'class="concept"' in card
 
+    assert "How to hold this chair" in card and "Do not lift by" in card
+    assert "The manual gives no lifting points" not in card       # the record has a hold zone
     report = (out / "REPORT.md").read_text()
+    assert "Handling zones: 1 hold, 1 no_hold" in report and "Lift by the cushion." in report
+    assert "| zone | kind | part |" in report
     assert "Lift the chair by the frame only." in report             # the failed quote is listed
     assert "| right / wrong |" in report
     assert "- wh_each" in report
@@ -82,7 +91,7 @@ def test_offline_run_end_to_end(capsys):
     client = TestClient(app)
     page = client.get("/passport/chair-t").text
     assert "WHILL Model C2" in page and "Pull both levers." in page
-    assert "2 labels hidden" in page
+    assert "3 labels hidden" in page and "2 handling zones hidden" in page
     assert "WCLB or WCLX" in client.get("/uses/chair-t/checkin").text
 
 
