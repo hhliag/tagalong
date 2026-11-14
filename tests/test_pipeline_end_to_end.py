@@ -9,6 +9,16 @@ from pipeline.__main__ import main
 from tests.helpers import META, make_chair
 from tests.test_pipeline_extract import RESPONSE
 
+HANDLING = {"handling": [
+    {"kind": "hold", "part_id": "seat_frame", "reason": "Hold the seat frame when lifting.",
+     "part_name": {"value": "Seat frame", "page": 5, "quote": "seat frame"}, "where": "under the seat",
+     "source": {"page": 5, "quote": "Hold the seat frame when lifting."}},
+    {"kind": "no_hold", "part_id": "armrest", "reason": "Do not lift by the armrests.",
+     "part_name": {"value": "Armrest", "page": 5, "quote": "armrests"}, "where": "",
+     "source": {"page": 5, "quote": "Do not lift the chair by the armrests."}},
+    {"kind": "hold", "part_id": "seat", "reason": "made up", "source": {"page": 5, "quote": "Lift by the cushion."}},
+]}
+
 LABELS = {  # offline label responses, one per photo: left, right, front, rear
     1: {"parts": [{"part_id": "freewheel_lever", "visible": True, "confidence": 0.9, "x": 0.3, "y": 0.6},
                   {"part_id": "battery", "visible": False, "confidence": 0.1}]},
@@ -25,6 +35,9 @@ def test_offline_run_end_to_end(capsys):
     assert main(["chair-t", "--provider", "offline"]) == 3                                   # waits at extract
     assert "Waiting for offline response:" in capsys.readouterr().out
     (off / "extract_1_response.json").write_text(json.dumps(RESPONSE))
+    assert main(["chair-t", "--provider", "offline"]) == 3                                   # then handling
+    assert "handling_1_response.json" in capsys.readouterr().out
+    (off / "handling_1_response.json").write_text(json.dumps(HANDLING))
 
     for n in range(1, 5):                                           # then once per photo
         assert main(["chair-t", "--provider", "offline"]) == 3
@@ -78,6 +91,7 @@ def test_card_has_no_sample_line_unless_meta_says_so():
     off = config.OUT_DIR / "chair-t" / "offline"
     off.mkdir(parents=True)
     (off / "extract_1_response.json").write_text(json.dumps(RESPONSE))
+    (off / "handling_1_response.json").write_text(json.dumps(HANDLING))
     for n in range(1, 5):
         (off / f"label_{n}_response.json").write_text(json.dumps(LABELS[n]))
     assert main(["chair-t", "--provider", "offline"]) == 0

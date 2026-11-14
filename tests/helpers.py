@@ -10,7 +10,8 @@ MANUAL_PAGES = [
     "Manual mode\nPull the freewheel levers on both sides to switch to manual mode.\n"
     "WARNING: Do not use manual mode on a slope.\nPush the free-\nwheel levers back before driving.",
     "Power\nPress the power button to turn the power off.\nCheck that the chair does not move.",
-    "Battery\nThe battery can be removed from the vehicle.\nLithium-ion battery. Remove the key before lifting.",
+    "Battery\nThe battery can be removed from the vehicle.\nLithium-ion battery. Remove the key before lifting.\n"
+    "Do not lift the chair by the armrests. Hold the seat frame when lifting.",
     "Specifications\nWeight: 52 kg\nDimensions: 985 x 554 x 743 mm\nNominal voltage: 25.2 V\nCapacity: 10.8 Ah",
     "Cleaning\nWipe with a soft cloth.",
 ]
