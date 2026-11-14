@@ -62,3 +62,11 @@ Where DESIGN.md was unclear, the simplest option was chosen and written here. Ch
 
 39. **Hand-written record** (`app/fixtures/library/whill-model-c2.json`, WHILL Model C2) has placeholder quotes and pages, shown with a `fixture_note`; it is what the tests use. `wh_each` is empty on purpose so the §5.2 computed line shows.
 40. **Kovital KV-E100.** The manual calls the chair SWWP12504 (N3502) and never says "KV-E100", so the pages stage warns; the LLM put SWWP12504(N3502) in `aliases`. Its freewheel lever is 制動杆 (engaged 嚙合 / disengaged 脫開).
+
+## Cloud Run deploy
+
+41. **Deploy commands** were not given in the task, so the README uses `gcloud run deploy tagalong --source .` (Cloud Build builds the Dockerfile) in `asia-east2` (Hong Kong), public, `--max-instances 1`, `--memory 1Gi`.
+42. **Figure crops on Cloud Run.** The app serves them from `out/`, which is not uploaded. `scripts/prepare_deploy.sh` copies `out/<chair>/figures/` into `deploy_data/out/`, and the image sets a new variable `TAGALONG_OUT_DIR=/app/deploy_data/out` (default `./out`, so local runs are unchanged).
+43. **State on Cloud Run** (label decisions, build progress) is written inside the container and lost on restart; `--max-instances 1` keeps every viewer on the same copy. `data/state/` is not copied, so a deploy starts with every label grey.
+44. **MODE** defaults to `saved` when `K_SERVICE` is set, else `live`; `MODE` in the environment wins. Live mode is not built, so nothing reads it yet: behaviour is the same either way.
+45. **Ignore files.** `.gcloudignore` (upload) and `.dockerignore` (image) both leave out `.env`, `.git`, `out/`, `saved/`, `data/`, `.venv/`, caches and `16_PIPELINE.md` (the owner's private prompt doc). Patterns are anchored (`/out/`) so `deploy_data/out/` is kept. The Dockerfile fails with a message when `deploy_data/` was not prepared.

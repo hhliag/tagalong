@@ -1,0 +1,12 @@
+# Kept out of the image. deploy_data/ stays in (Dockerfile copies it).
+.git
+.env
+/out
+/saved
+/data
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.DS_Store
+16_PIPELINE.md

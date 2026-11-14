@@ -1,0 +1,15 @@
+# What `gcloud run deploy --source .` uploads. Without this file gcloud uses .gitignore,
+# which would skip deploy_data/ (photos, manuals). deploy_data/ must NOT be listed here.
+.gcloudignore
+.git
+.gitignore
+.env
+/out/
+/saved/
+/data/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+16_PIPELINE.md

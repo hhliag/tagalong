@@ -57,6 +57,39 @@ The app listens on `0.0.0.0:8000`.
 
 Stop the tunnel with Ctrl-C when you are done: anyone with the link can open the app.
 
+## Deploy to Google Cloud Run
+
+The deployed app runs on saved results (`MODE=saved`, the default on Cloud Run); it needs no LLM key and no `.env`.
+
+One-time setup:
+
+```bash
+gcloud auth login
+gcloud config set project <PROJECT_ID>
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+```
+
+Each deploy:
+
+```bash
+./scripts/prepare_deploy.sh            # copies photos, manuals (and sources.yaml) + figure crops into deploy_data/
+gcloud run deploy tagalong --source . --region asia-east2 \
+  --allow-unauthenticated --max-instances 1 --memory 1Gi
+```
+
+- `--source .` builds the `Dockerfile` with Cloud Build. `.gcloudignore` decides what is uploaded: it keeps `deploy_data/` (gitignored) and leaves out `.env`, `data/`, `out/`, `saved/` and `.git`.
+- `library/` and `devices/` go up as they are on your disk, including uncommitted pipeline results.
+- `--max-instances 1`: label decisions live in the container (`deploy_data/state/`), so one instance keeps them consistent. They are lost when the instance restarts, like `--reset`.
+- `asia-east2` is Hong Kong; any region works. The command prints the service URL. The QRs use it automatically (or set `PUBLIC_BASE_URL` with `--set-env-vars`).
+
+Try the image locally first (needs Docker):
+
+```bash
+./scripts/prepare_deploy.sh
+docker build -t tagalong .
+docker run --rm -p 8080:8080 -e PORT=8080 -e K_SERVICE=local tagalong   # http://localhost:8080
+```
+
 ## Crew lookup
 
 `/crew` lets ground crew find a chair by its tag ID, and the QR on the printed card opens `/crew/<tag_id>` straight from the phone camera. The crew view leads with "How to hold this chair", then the photos with confirmed labels, the must-do steps, battery facts and the IATA lines. Every page has a "Crew lookup" link in the top bar.

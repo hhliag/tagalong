@@ -12,3 +12,5 @@ data/
 # pipeline working files and saved copies: they hold full manual text and our photos
 out/
 saved/
+# copy of the data folder for the Cloud Run image (scripts/prepare_deploy.sh)
+deploy_data/
