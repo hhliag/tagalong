@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import photo, step_item, handling_box, page_links %}
+{% from "_macros.html" import photo, step_item, handling_box, page_links, label_legend %}
 {% block title %}Crew · {{ chair.tag_id }} · TagAlong{% endblock %}
 {% block crumbs %}<a class="crumb" href="/crew">Crew</a>{% endblock %}
 {% block content %}
@@ -17,6 +17,7 @@
   <div class="photos">
     {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
   </div>
+  {{ label_legend(v.legend) }}
   {% if v.hidden_count %}
   <p class="hidden-line">{{ v.hidden_count }} label{{ 's' if v.hidden_count != 1 }} hidden (not confirmed by the owner).</p>
   {% endif %}
@@ -24,7 +25,7 @@
   <h2>Must do</h2>
   {% for title, group in v.must_groups %}
   <h3 class="phase">{{ title }}</h3>
-  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s) }}{% endfor %}</ol>
+  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s, chair_id=chair.chair_id) }}{% endfor %}</ol>
   {% else %}
   <p>No verified must-do steps.</p>
   {% endfor %}

@@ -29,7 +29,7 @@ RULES
 2. Copy each "quote" EXACTLY from the page text: at most 25 words (Chinese or Japanese: at most 60 characters), no paraphrase, no translation, no fixing typos.
 3. "page" is the n of the [[PAGE n]] marker of the page where the quote is.
 4. "reason" (at most ~15 words or 30 Chinese characters) may only shorten its own quote, in the quote's language.
-5. "part_id": use an id from KNOWN PARTS when it fits. Otherwise make a new snake_case id and also give "part_name" (value: short English name; page and exact quote naming the part) and "where" (short text from the manual saying where the part is).
+5. "part_id": use an id from KNOWN PARTS when it fits. Otherwise make a new snake_case id and also give "part_name" (value: the part's name exactly as the manual writes it, in the manual's language; page and exact quote naming the part) and "where" (short text from the manual saying where the part is).
 6. If the manual gives no such statement, return {"handling": [], "handling_missing": true}.
 7. Reply with the JSON object only."""
 

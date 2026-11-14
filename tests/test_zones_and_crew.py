@@ -51,7 +51,7 @@ def test_confirmed_zones_show_on_passport_print_and_crew():
         page = client.get(path).text
         assert "How to hold this chair" in page
         assert "Lift by the frame." in page and "Not by the armrests." in page
-        assert 'class="zone-mark hold confirmed"' in page and 'class="zone-box no_hold confirmed"' in page
+        assert 'class="pin zone hold confirmed side-' in page and 'class="zone-box no_hold confirmed"' in page
         assert "/manual/whill-model-c2/12?step=h1" in page
         assert page.index("How to hold this chair") < page.index("Must do")
     printed = client.get("/passport/chair-a/print").text
@@ -64,7 +64,7 @@ def test_pending_and_rejected_zones_never_appear(status):
     for path in ("/passport/chair-a", "/passport/chair-a/print", "/crew/AP-7Q4K"):
         page = client.get(path).text
         assert "Lift by the frame." not in page and "Not by the armrests." not in page
-        assert "zone-mark hold confirmed\"" not in page and "zone-box" not in page
+        assert "pin zone" not in page and "zone-box" not in page
     assert "2 handling zones hidden" in client.get("/passport/chair-a").text
 
 
@@ -73,7 +73,7 @@ def test_handling_missing_shows_ask_the_owner_and_no_markers():
     for path in ("/passport/chair-a", "/passport/chair-a/print", "/crew/AP-7Q4K"):
         page = client.get(path).text
         assert "The manual gives no lifting points. Ask the owner." in page
-        assert 'id="box-' not in page and "zone-mark hold confirmed\"" not in page
+        assert 'id="box-' not in page and "pin zone" not in page
 
 
 def test_only_no_hold_zones_still_says_no_lifting_points():
@@ -86,7 +86,7 @@ def test_confirm_lists_zones_with_question_marks():
     install(zone_status=("pending", "pending"))
     page = client.get("/confirm/chair-a").text
     assert "Lift here: Frame" in page and "Do not hold: Armrest" in page
-    assert 'class="zone-mark hold pending"' in page          # pending = dashed + "?" (CSS)
+    assert 'class="pin zone hold pending side-' in page      # pending: "?" in the badge (CSS)
     r = client.post("/api/labels/chair-a/3", json={"status": "confirmed"})
     assert r.status_code == 200
     assert "Lift by the frame." in client.get("/passport/chair-a").text
@@ -132,10 +132,11 @@ def test_render_hold_and_no_hold_colours():
              {"zone": "no_hold", "x": 0.75, "y": 0.5, "box": [0.6, 0.3, 0.9, 0.7]}]
     out = render.draw_zones(image, zones)
     r = round(0.03 * 750)
-    assert out.getpixel((250 - r + 4, 375)) == (0x1E, 0x8E, 0x3E)          # green circle (left of the check)
-    assert out.getpixel((750 - r + 4, 375 - r + 8)) == (0xC5, 0x22, 0x1F)  # red square
-    inside_box = out.getpixel((640, 240))                                  # red tint over grey, not the marker
-    assert inside_box[0] > 128 and inside_box[1] < 128
-    # Part dots drawn after the zones stay on top
-    on_top = render.draw_labels(out, [{"n": 1, "x": 0.25, "y": 0.5}])
-    assert on_top.getpixel((250 + 10, 375)) == (0xC3, 0xAC, 0x86)
+    assert out.getpixel((250 - r, 375)) == (0x1E, 0x8E, 0x3E)          # green ring (hold)
+    assert out.getpixel((750 - r, 375)) == (0xC5, 0x22, 0x1F)          # red ring (no_hold)
+    assert out.getpixel((250, 375)) == (128, 128, 128)                 # rings are hollow
+    assert out.getpixel((640, 280)) == (128, 128, 128)                 # no fill inside the no_hold box
+    assert out.getpixel((600, 300)) == (0xC5, 0x22, 0x1F)              # box corner: red outline
+    # Part pins drawn with the zones stay readable: gold ring, see-through centre
+    both = render.draw_markers(image, [{"n": 1, "x": 0.5, "y": 0.2}], zones)
+    assert both.getpixel((500 + r, 150)) == (0xC3, 0xAC, 0x86) and both.getpixel((500, 150)) == (128, 128, 128)

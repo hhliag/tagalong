@@ -54,6 +54,13 @@
   .zm { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 2px solid #fff; color: #fff;
         font-weight: 700; font-size: .8rem; vertical-align: middle; }
   .zm.hold { background: #1E8E3E; border-radius: 50%; } .zm.no_hold { background: #C5221F; border-radius: 6px; }
+  .chip-part { background: rgba(255,255,255,.12); color: #fff; }
+  .code { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 4px; border-radius: 11px;
+          background: var(--gold); color: var(--teal); font-weight: 700; font-size: .8rem; }
+  .label-legend { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .9rem; }
+  .label-legend li { display: flex; align-items: center; gap: 6px; }
+  .fig { margin: 8px 0 0; color: var(--soft); font-size: .8rem; }
+  .fig img { display: block; max-width: 100%; max-height: 260px; background: #fff; border-radius: 8px; margin-bottom: 4px; }
   .legend { margin: 4px 0 0; font-size: .8rem; color: var(--soft); display: flex; gap: 6px; align-items: center; }
   .no-lift { font-weight: 700; color: var(--warn); }
   @media (max-width: 480px) {
@@ -64,6 +71,11 @@
 </style>
 </head>
 <body>
+{% macro fig(s) -%}
+{% if s.id in figures %}<div class="fig"><img src="{{ figures[s.id] }}" alt="Figure from the manual, page {{ s.figure.page }}">
+  From the manual, p. {{ s.figure.page }}{% if s.figure.caption %} · {{ s.figure.caption }}{% endif %}
+  {% if s.figure.matched_by == 'ai' %}<span class="chip chip-warn">Figure matched by AI</span>{% elif s.figure.matched_by == 'page' %}<span class="chip chip-ai">Whole page</span>{% endif %}</div>{% endif %}
+{%- endmacro %}
 <span class="concept">Concept</span>
 <main>
 <section class="card">
@@ -82,6 +94,7 @@
       {% if p.zones %}<p class="legend"><span class="zm hold">✓</span> Lift here <span class="zm no_hold">✗</span> Do not hold</p>{% endif %}</figure>
     {% endfor %}
   </div>
+  {% if v.legend %}<ul class="label-legend">{% for code, name in v.legend %}<li><span class="code">{{ code }}</span> {{ name }}</li>{% endfor %}</ul>{% endif %}
 
   <h2>Key facts</h2>
   <table>
@@ -119,8 +132,9 @@
   <ol>
     {% for s in group %}
     <li class="step"><span class="num">{{ s.num }}</span><div>
-      <p class="action">{% if s.label_n %}<span class="dot">{{ s.label_n }}</span>{% endif %}{{ s.action }}</p>
-      <p class="meta"><span class="chip chip-ai">AI-extracted · page verified</span><span class="pg">p.&nbsp;{{ s.source.page }}</span></p>
+      <p class="action">{{ s.action_display }}</p>
+      <p class="meta">{% if s.part_chip %}<span class="chip chip-part">{% if s.part_chip.code %}<b>{{ s.part_chip.code }}</b> · {% endif %}{{ s.part_chip.name }}</span>{% endif %}<span class="chip chip-ai">AI-extracted · page verified</span><span class="pg">p.&nbsp;{{ s.source.page }}</span></p>
+      {{ fig(s) }}
     </div></li>
     {% endfor %}
   </ol>
@@ -134,11 +148,12 @@
     <ul class="steps">
       {% for s in v.more %}
       <li class="step"><div>
-        <p class="action">{% if s.label_n %}<span class="dot">{{ s.label_n }}</span>{% endif %}{{ s.action }}</p>
-        <p class="meta">
+        <p class="action">{{ s.action_display }}</p>
+      <p class="meta">{% if s.part_chip %}<span class="chip chip-part">{% if s.part_chip.code %}<b>{{ s.part_chip.code }}</b> · {% endif %}{{ s.part_chip.name }}</span>{% endif %}
           {% if s.verified %}<span class="chip chip-ai">AI-extracted · page verified</span>{% else %}<span class="chip chip-warn">Quote not found on page</span>{% endif %}
           <span class="pg">p.&nbsp;{{ s.source.page }}</span>
         </p>
+        {{ fig(s) }}
       </div></li>
       {% endfor %}
     </ul>

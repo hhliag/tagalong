@@ -13,11 +13,13 @@ from . import config, store, view
 HERE = Path(__file__).resolve().parent
 USES = {"checkin": "Check-in", "onboard": "On board", "return": "Return check"}
 PHOTO_NAME = re.compile(r"^[a-z0-9_]+\.jpg$")
+STEP_ID = re.compile(r"^s\d+$")
 CONFIRM_VIEWS = ["left.jpg", "right.jpg", "front.jpg", "rear.jpg"]
 
 app = FastAPI(title="TagAlong")
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=HERE / "templates")
+templates.env.globals["letter"] = view.letter   # part codes A, B, C... from n
 
 
 def _chair(chair_id):
@@ -69,8 +71,7 @@ def confirm(request: Request, chair_id: str):
     return _page(
         request, "confirm.html", chair=chair, part_labels=part_labels, zone_labels=zone_labels, zones=zones,
         parts={p["id"]: p for p in record["parts"]},
-        photos=[{"file": f, "labels": [l for l in part_labels if l["photo"] == f],
-                 "zones": [z for z in zone_labels if z["photo"] == f]} for f in files],
+        photos=[view.photo_entry(f, part_labels, zone_labels) for f in files],
     )
 
 
@@ -133,6 +134,16 @@ def manual_page(request: Request, record_id: str, page: int, step: str | None = 
         quotes.append((f"{'Lift here' if z['kind'] == 'hold' else 'Do not lift by'}: {z['reason']}", z["source"], z["id"]))
     quotes = [q for q in quotes if q[1].get("page") == page]
     return _page(request, "manual.html", record=record, page=page, step=step, quotes=quotes)
+
+
+@app.get("/figure/{chair_id}/{step_id}")
+def figure(chair_id: str, step_id: str):
+    """The manual figure a step refers to, cropped by the pipeline's figures stage."""
+    _chair(chair_id)
+    path = config.OUT_DIR / chair_id / "figures" / f"{step_id}.png"
+    if not STEP_ID.match(step_id) or not path.is_file():
+        raise HTTPException(404)
+    return FileResponse(path)
 
 
 @app.get("/photo/{chair_id}/{name}")

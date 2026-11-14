@@ -2,21 +2,21 @@
 <figure class="photo">
   <div class="photo-frame">
     <img src="/photo/{{ chair_id }}/{{ p.file }}" alt="{{ p.file }} view of the chair">
-    {# Zones first, so the part numbers sit on top #}
+    {# Zones first, so the part pins sit on top. Pins are hollow rings: the part stays visible. #}
     {% for z in p.zones or [] %}
     {% set st = z.status if show_status else 'confirmed' %}
     {% if z.box %}
     <span class="zone-box {{ z.zone }} {{ st }}" id="box-{{ z.id }}"
           style="left: {{ (z.box[0] * 100)|round(1) }}%; top: {{ (z.box[1] * 100)|round(1) }}%; width: {{ ((z.box[2] - z.box[0]) * 100)|round(1) }}%; height: {{ ((z.box[3] - z.box[1]) * 100)|round(1) }}%"></span>
     {% endif %}
-    <span class="zone-mark {{ z.zone }} {{ st }}" id="dot-{{ z.id }}"
+    <span class="pin zone {{ z.zone }} {{ st }} side-{{ z.side }}" id="dot-{{ z.id }}"
           style="left: {{ (z.x * 100)|round(1) }}%; top: {{ (z.y * 100)|round(1) }}%"
-          title="{{ 'Lift here' if z.zone == 'hold' else 'Do not hold' }}: {{ parts[z.part_id].name.value }}"></span>
+          title="{{ 'Lift here' if z.zone == 'hold' else 'Do not hold' }}: {{ parts[z.part_id].name.value }}"><span class="pin-line"></span><span class="pin-badge"></span></span>
     {% endfor %}
     {% for l in p.labels %}
-    <span class="dot {{ l.status if show_status else 'confirmed' }}" id="dot-{{ l.id }}"
+    <span class="pin part {{ l.status if show_status else 'confirmed' }} side-{{ l.side }}" id="dot-{{ l.id }}"
           style="left: {{ (l.x * 100)|round(1) }}%; top: {{ (l.y * 100)|round(1) }}%"
-          title="{{ parts[l.part_id].name.value }}">{{ l.n }}</span>
+          title="{{ l.code }} · {{ parts[l.part_id].name.value }}"><span class="pin-line"></span><span class="pin-badge">{{ l.code }}</span></span>
     {% endfor %}
   </div>
   <figcaption>{{ p.file.rsplit('.', 1)[0]|capitalize }} view</figcaption>
@@ -25,8 +25,27 @@
 {%- endmacro %}
 
 {% macro legend() -%}
-<p class="zone-legend"><span class="zone-mark hold confirmed inline"></span> Lift here
-  <span class="zone-mark no_hold confirmed inline"></span> Do not hold</p>
+<p class="zone-legend"><span class="zbadge hold"></span> Lift here <span class="zbadge no_hold"></span> Do not hold</p>
+{%- endmacro %}
+
+{% macro label_legend(items) -%}
+{% if items %}
+<ul class="label-legend">{% for code, name in items %}<li><span class="code-badge">{{ code }}</span> {{ name }}</li>{% endfor %}</ul>
+{% endif %}
+{%- endmacro %}
+
+{% macro part_chip(s) -%}
+{% if s.part_chip %}<span class="chip chip-part">{% if s.part_chip.code %}<b>{{ s.part_chip.code }}</b> · {% endif %}{{ s.part_chip.name }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro step_figure(chair_id, record_id, s) -%}
+{% if s.figure and chair_id %}
+<a class="step-figure" href="/manual/{{ record_id }}/{{ s.figure.page }}?step={{ s.id }}">
+  <img src="/figure/{{ chair_id }}/{{ s.id }}" alt="Figure from the manual, page {{ s.figure.page }}" loading="lazy">
+  <span>From the manual, p. {{ s.figure.page }}{% if s.figure.caption %} · {{ s.figure.caption }}{% endif %}
+    {% if s.figure.matched_by == 'ai' %}<span class="chip chip-warn">Figure matched by AI</span>{% elif s.figure.matched_by == 'page' %}<span class="chip chip-ai">Whole page</span>{% endif %}</span>
+</a>
+{% endif %}
 {%- endmacro %}
 
 {% macro handling_box(record_id, h, limit=none) -%}
@@ -34,14 +53,14 @@
 <section class="handling">
   <h2>How to hold this chair</h2>
   {% if h.hold %}
-  <h3 class="hold-title"><span class="zone-mark hold confirmed inline"></span> Lift here</h3>
+  <h3 class="hold-title"><span class="zbadge hold"></span> Lift here</h3>
   <ul class="zone-list hold">
     {% for z in (h.hold[:limit] if limit else h.hold) %}{{ zone_item(record_id, z) }}{% endfor %}
   </ul>
   {% endif %}
   {% if h.no_lift_points %}<p class="no-lift">The manual gives no lifting points. Ask the owner.</p>{% endif %}
   {% if h.no_hold %}
-  <h3 class="no-hold-title"><span class="zone-mark no_hold confirmed inline"></span> Do not lift by</h3>
+  <h3 class="no-hold-title"><span class="zbadge no_hold"></span> Do not lift by</h3>
   <ul class="zone-list no_hold">
     {% for z in (h.no_hold[:limit] if limit else h.no_hold) %}{{ zone_item(record_id, z) }}{% endfor %}
   </ul>
@@ -70,15 +89,13 @@
 {% if step.owner_confirmed %}<span class="chip chip-owner">Owner-confirmed</span>{% endif %}
 {%- endmacro %}
 
-{% macro step_item(record_id, s, numbered=true) -%}
+{% macro step_item(record_id, s, numbered=true, chair_id=none) -%}
 <li class="step">
   {% if numbered %}<span class="step-num">{{ s.num }}</span>{% endif %}
   <div class="step-body">
-    <p class="step-action">
-      {% if s.label_n %}<span class="dot dot-inline confirmed" title="Label on the photo">{{ s.label_n }}</span>{% endif %}
-      {{ s.action }}
-    </p>
-    <p class="step-meta">{{ trust(s) }} {{ page_links(record_id, [s.source], s.id) }}</p>
+    <p class="step-action">{{ s.action_display }}</p>
+    <p class="step-meta">{{ part_chip(s) }} {{ trust(s) }} {{ page_links(record_id, [s.source], s.id) }}</p>
+    {{ step_figure(chair_id, record_id, s) }}
   </div>
 </li>
 {%- endmacro %}

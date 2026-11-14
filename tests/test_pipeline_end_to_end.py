@@ -63,8 +63,10 @@ def test_offline_run_end_to_end(capsys):
     for view in ("left", "right", "front", "rear"):
         with Image.open(out / f"labelled_{view}.png") as im:
             assert max(im.size) == 1024
-    with Image.open(out / "labelled_left.png") as im:
-        assert im.getpixel((round(0.3 * im.width) + 10, round(0.6 * im.height))) == (0xC3, 0xAC, 0x86)
+    with Image.open(out / "labelled_left.png") as im, Image.open(out / "resized" / "left.jpg") as src:
+        cx, cy, r = round(0.3 * im.width), round(0.6 * im.height), round(0.03 * min(im.size))
+        assert im.getpixel((cx + r, cy)) == (0xC3, 0xAC, 0x86)                 # gold ring (pending)
+        assert im.getpixel((cx, cy)) == src.convert("RGB").getpixel((cx, cy))  # see-through centre
 
     card = (out / "card.html").read_text()
     assert "Labels not yet confirmed by the owner." in card

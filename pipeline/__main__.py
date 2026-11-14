@@ -6,7 +6,7 @@ import sys
 from . import llm
 from .common import PipelineError, out_dir
 
-STAGES = ["pages", "extract", "handling", "label", "render"]
+STAGES = ["pages", "extract", "handling", "figures", "label", "render"]
 
 
 def main(argv=None):

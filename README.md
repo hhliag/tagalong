@@ -68,7 +68,7 @@ Open `/passport/chair-a/print` in Chrome → **Print**. The page sets A5 landsca
 ## Pipeline: photos + manual → labelled passport
 
 ```
-python -m pipeline <chair_id> [--stage pages|extract|handling|label|render|all]
+python -m pipeline <chair_id> [--stage pages|extract|handling|figures|label|render|all]
                               [--provider gemini|anthropic|openai|offline] [--model NAME]
 ```
 
@@ -98,6 +98,7 @@ tag_id: AP-7Q4K                # optional: otherwise made from the chair id
 | `pages` | no | meta.yaml, the PDF | `out/<chair>/pages.json` |
 | `extract` | 1 text call | pages.json | `out/<chair>/record.json`, `library/<record_id>.json` |
 | `handling` | 1 text call | pages.json, record.json | hold / no_hold zones into `record.json` and `library/`; `out/<chair>/handling.json` (dropped zones) |
+| `figures` | 0, or 1 vision call per step that needs a figure but names none | the PDF, record.json | `out/<chair>/figures/<step>.png` crops; `figure` on each step in `record.json` |
 | `label` | 1 vision call per photo | record.json, photos | part + zone labels in `out/<chair>/device.json`, `detections.json`, `devices/<chair>.json` |
 | `render` | no | all of the above | `out/<chair>/labelled_<view>.png`, `card.html`, `REPORT.md` |
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import photo, legend %}
+{% from "_macros.html" import photo, legend, label_legend %}
 {% block title %}Card {{ chair.tag_id }} · TagAlong{% endblock %}
 {% block body_class %}print-page{% endblock %}
 {% block header %}
@@ -30,6 +30,7 @@
       <div class="sheet-photos">
         {% for p in v.photos[:2] %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
       </div>
+      {{ label_legend(v.legend) }}
       <div class="sheet-foot">
         <div class="qr">{{ qr|safe }}<span>Crew: scan</span></div>
         <p class="return-door">Return to the aircraft door</p>
@@ -40,21 +41,26 @@
       {% if h %}
       <div class="sheet-zones">
         {% if h.hold %}
-        <p class="sz-title"><span class="zone-mark hold confirmed inline"></span> Lift here</p>
+        <p class="sz-title"><span class="zbadge hold"></span> Lift here</p>
         <ul>{% for z in h.hold[:3] %}<li>{{ z.part_name }} <small>p.&nbsp;{{ z.source.page }}</small></li>{% endfor %}</ul>
         {% endif %}
         {% if h.no_lift_points %}<p class="sz-none">The manual gives no lifting points. Ask the owner.</p>{% endif %}
         {% if h.no_hold %}
-        <p class="sz-title"><span class="zone-mark no_hold confirmed inline"></span> Do not lift by</p>
+        <p class="sz-title"><span class="zbadge no_hold"></span> Do not lift by</p>
         <ul>{% for z in h.no_hold[:3] %}<li>{{ z.part_name }} <small>p.&nbsp;{{ z.source.page }}</small></li>{% endfor %}</ul>
         {% endif %}
       </div>
       {% endif %}
+      {# Figures only while they fit one A5 sheet: at most 4 must-do steps #}
+      {% set show_figures = v.must|length <= 4 %}
       <ol class="sheet-steps">
         {% for s in v.must %}
         <li>
           <span class="step-num">{{ s.num }}</span>
-          <span>{% if s.label_n %}<span class="dot dot-inline confirmed">{{ s.label_n }}</span> {% endif %}{{ s.action }} <small>p.&nbsp;{{ s.source.page }}</small></span>
+          <span class="sheet-step-text">{{ s.action_display }}
+            {% if s.part_chip %}<span class="sheet-chip">{% if s.part_chip.code %}{{ s.part_chip.code }} · {% endif %}{{ s.part_chip.name }}</span>{% endif %}
+            <small>p.&nbsp;{{ s.source.page }}</small></span>
+          {% if show_figures and s.figure %}<img class="sheet-figure" src="/figure/{{ chair.chair_id }}/{{ s.id }}" alt="Figure, p. {{ s.figure.page }}">{% endif %}
         </li>
         {% endfor %}
       </ol>

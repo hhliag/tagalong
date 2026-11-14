@@ -49,6 +49,7 @@ SCHEMA = {
                 "source": {"type": "object", "required": ["page", "quote"],
                            "properties": {"page": {"type": "integer"}, "quote": {"type": "string"}}},
                 "safety": {"enum": SAFETY},
+                "figure_ref": {"type": ["string", "null"], "description": "caption the text names, e.g. 圖4.10, or null"},
             }}},
         "facts": {
             "type": "object",
@@ -70,7 +71,9 @@ RULES
 3. When the manual does not say something, set its value, page and quote to null. Never guess.
 4. Never add a step that has no quote. Each step has one source quote.
 5. "action" (at most ~20 words or 40 Chinese characters) may only shorten its own quote, in the quote's language. Do not translate, and do not add words, advice or facts.
-6. "value" fields are short and in English whatever the manual's language: numbers as numbers (25.2, not "25.2 V"), battery chemistry like "Lithium-ion" or "Sealed lead acid", part names like "Freewheel lever". The quote is the proof for the value.
+6. Fact "value" fields are short and in English whatever the manual's language: numbers as numbers (25.2, not "25.2 V"), battery chemistry like "Lithium-ion" or "Sealed lead acid". The quote is the proof for the value.
+   A part's name "value" is the part's name exactly as the manual writes it, in the manual's language (e.g. "制動杆", "Freewheel lever"), and its quote contains that name.
+   "figure_ref": the figure caption the manual text names for this step (e.g. "圖4.10" from "（見圖4.10）"), copied exactly, or null. Never guess a figure the text does not name.
 7. Parts are physical parts a handler touches: freewheel levers, joystick, battery, armrests, footrest, seat, headrest, power switch, lift points.
 8. phase: before_loading, lifting, in_hold or at_arrival. safety: dg (battery / dangerous goods), injury, damage or comfort.
 9. Reply with the JSON object only."""
@@ -163,6 +166,7 @@ def build_record(raw, pages_data, provider=None, model=None):
             "action": (p.get("action") or "").strip(),
             "source": source,
             "safety": p.get("safety") if p.get("safety") in SAFETY else "comfort",
+            "figure_ref": p.get("figure_ref") if isinstance(p.get("figure_ref"), str) and p["figure_ref"].strip() else None,
             "must_do": False,
             "trust": "ai_extracted",
         })

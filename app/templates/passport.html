@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import photo, step_item, sample_note, fixture_note, handling_box %}
+{% from "_macros.html" import photo, step_item, sample_note, fixture_note, handling_box, label_legend %}
 {% block title %}{{ v.name }} · TagAlong{% endblock %}
 {% block crumbs %}<span class="crumb">Passport</span>{% endblock %}
 {% block content %}
@@ -15,6 +15,7 @@
   <div class="photos">
     {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
   </div>
+  {{ label_legend(v.legend) }}
   {% if v.hidden_count %}
   <p class="hidden-line">{{ v.hidden_count }} label{{ 's' if v.hidden_count != 1 }} hidden (not confirmed by the owner).</p>
   {% endif %}
@@ -24,7 +25,7 @@
   <h2>Must do</h2>
   {% for title, group in v.must_groups %}
   <h3 class="phase">{{ title }}</h3>
-  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s) }}{% endfor %}</ol>
+  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s, chair_id=chair.chair_id) }}{% endfor %}</ol>
   {% else %}
   <p>No verified must-do steps.</p>
   {% endfor %}
@@ -32,7 +33,7 @@
   {% if v.more %}
   <details class="more">
     <summary>More from the manual ({{ v.more|length }})</summary>
-    <ul class="steps">{% for s in v.more %}{{ step_item(record.record_id, s, numbered=false) }}{% endfor %}</ul>
+    <ul class="steps">{% for s in v.more %}{{ step_item(record.record_id, s, numbered=false, chair_id=chair.chair_id) }}{% endfor %}</ul>
   </details>
   {% endif %}
 

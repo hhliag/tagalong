@@ -14,7 +14,6 @@ from .label import resized_path
 GOLD, TEAL, WHITE = "#C3AC86", "#044B52", "#FFFFFF"
 GREEN, RED = "#1E8E3E", "#C5221F"
 LIGHT_GREEN = (129, 201, 149, 255)
-RED_FILL, RED_HATCH = (197, 34, 31, 64), (197, 34, 31, 170)   # 25% fill, darker hatching
 FACT_KEYS = ["battery_type", "voltage", "capacity", "wh", "removable", "power_off", "weight", "size", "removable_parts"]
 
 _env = Environment(loader=FileSystemLoader(Path(__file__).parent / "templates"),
@@ -25,56 +24,84 @@ def _radius(image):
     return max(8, round(0.03 * min(image.size)))
 
 
-def _hatch(size, step, width):
-    """Transparent tile with red diagonal lines, to lay over a no_hold box."""
-    w, h = size
-    tile = Image.new("RGBA", (max(1, w), max(1, h)), RED_FILL)
-    d = ImageDraw.Draw(tile)
-    for k in range(-h, w, step):
-        d.line((k, h, k + h, 0), fill=RED_HATCH, width=width)
-    return tile
+JADE = "#005D63"
+PIN_COLOUR = {"pending": GOLD, "confirmed": JADE}
 
 
-def draw_zones(image, zones):
-    """hold: green circle with a white check; no_hold: red rounded square with a white cross, its box
-    filled red at 25% with diagonal hatching. The shapes differ, so they still read in black and white."""
-    base = image.convert("RGBA")
+def _ring(draw, cx, cy, r, colour):
+    """Hollow ring: 3 px in the colour, with a 1 px white line outside and inside. The centre is untouched."""
+    draw.ellipse((cx - r - 2, cy - r - 2, cx + r + 2, cy + r + 2), outline=WHITE, width=1)
+    draw.ellipse((cx - r - 1, cy - r - 1, cx + r + 1, cy + r + 1), outline=colour, width=3)
+    draw.ellipse((cx - r + 2, cy - r + 2, cx + r - 2, cy + r - 2), outline=WHITE, width=1)
+
+
+def _dashed_rect(draw, box, colour, width, dash):
+    x0, y0, x1, y1 = box
+    for a, b, horizontal, fixed in ((x0, x1, True, y0), (x0, x1, True, y1), (y0, y1, False, x0), (y0, y1, False, x1)):
+        for start in range(int(a), int(b), dash * 2):
+            end = min(start + dash, b)
+            line = (start, fixed, end, fixed) if horizontal else (fixed, start, fixed, end)
+            draw.line(line, fill=colour, width=width)
+
+
+def draw_markers(image, labels, zones=()):
+    """Part pins (hollow ring + letter badge) and zone pins (ring + check/cross badge) on one photo.
+
+    The badge side comes from app.view.pin_sides, the same rule as the HTML pages. Zone boxes are
+    outlines only, so nothing covers the part itself.
+    """
+    image = image.copy()
+    draw = ImageDraw.Draw(image)
+    w, h = image.size
     r = _radius(image)
-    line = max(2, r // 4)
+    rb = max(7, round(r * 0.7))
+    offset = view.PIN_OFFSET * min(w, h)
+    font = ImageFont.load_default(size=round(rb * 1.3))
+    sides = view.pin_sides([(view.label_key(m), m["x"], m["y"]) for m in [*zones, *labels]])
+    vectors = {name: (sx, sy) for name, sx, sy in view.PIN_SIDES}
+
     for z in zones:
         if z.get("box"):
-            x0, y0, x1, y1 = (round(v * s) for v, s in zip(z["box"], (base.width, base.height) * 2))
-            if z["zone"] == "no_hold":
-                base.alpha_composite(_hatch((x1 - x0, y1 - y0), step=max(6, r // 2), width=max(1, r // 8)), (x0, y0))
+            box = (z["box"][0] * w, z["box"][1] * h, z["box"][2] * w, z["box"][3] * h)
+            if z["zone"] == "hold":
+                draw.rectangle(box, outline=LIGHT_GREEN, width=2)
             else:
-                ImageDraw.Draw(base).rectangle((x0, y0, x1, y1), outline=LIGHT_GREEN, width=max(2, r // 5))
-    draw = ImageDraw.Draw(base)
-    for z in zones:
-        cx, cy = z["x"] * base.width, z["y"] * base.height
-        if z["zone"] == "hold":
-            draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=GREEN, outline=WHITE, width=max(2, r // 6))
-            draw.line([(cx - 0.5 * r, cy), (cx - 0.12 * r, cy + 0.4 * r), (cx + 0.5 * r, cy - 0.42 * r)],
-                      fill=WHITE, width=line, joint="curve")
+                _dashed_rect(draw, box, RED, width=3, dash=max(6, r // 2))
+
+    for m in [*zones, *labels]:
+        cx, cy = m["x"] * w, m["y"] * h
+        zone = m.get("zone")
+        colour = (GREEN if zone == "hold" else RED) if zone else PIN_COLOUR.get(m.get("status"), GOLD)
+        sx, sy = vectors[sides[view.label_key(m)]]
+        bx, by = cx + sx * offset, cy + sy * offset
+        unit = 0.7071
+        line = (cx + sx * unit * (r + 2), cy + sy * unit * (r + 2), bx - sx * unit * rb, by - sy * unit * rb)
+        draw.line(line, fill=WHITE, width=4)
+        draw.line(line, fill=colour, width=2)
+        _ring(draw, cx, cy, r, colour)
+        if zone == "no_hold":
+            draw.rounded_rectangle((bx - rb, by - rb, bx + rb, by + rb), radius=round(rb * 0.3), fill=colour,
+                                   outline=WHITE, width=2)
+            k = 0.45 * rb
+            draw.line((bx - k, by - k, bx + k, by + k), fill=WHITE, width=max(2, rb // 4))
+            draw.line((bx - k, by + k, bx + k, by - k), fill=WHITE, width=max(2, rb // 4))
         else:
-            draw.rounded_rectangle((cx - r, cy - r, cx + r, cy + r), radius=round(r * 0.3), fill=RED,
-                                   outline=WHITE, width=max(2, r // 6))
-            k = 0.45 * r
-            draw.line((cx - k, cy - k, cx + k, cy + k), fill=WHITE, width=line)
-            draw.line((cx - k, cy + k, cx + k, cy - k), fill=WHITE, width=line)
-    return base.convert("RGB")
+            draw.ellipse((bx - rb, by - rb, bx + rb, by + rb), fill=colour, outline=WHITE, width=2)
+            if zone == "hold":
+                draw.line([(bx - 0.5 * rb, by), (bx - 0.12 * rb, by + 0.4 * rb), (bx + 0.5 * rb, by - 0.42 * rb)],
+                          fill=WHITE, width=max(2, rb // 4), joint="curve")
+            else:
+                text_colour = TEAL if colour == GOLD else WHITE
+                draw.text((bx, by), view.letter(m["n"]), fill=text_colour, font=font, anchor="mm")
+    return image
 
 
 def draw_labels(image, labels):
-    """Gold filled circle, white outline, dark teal number; radius ~3% of the short side."""
-    image = image.copy()
-    draw = ImageDraw.Draw(image)
-    r = _radius(image)
-    font = ImageFont.load_default(size=round(r * 1.2))
-    for l in labels:
-        cx, cy = l["x"] * image.width, l["y"] * image.height
-        draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=GOLD, outline=WHITE, width=max(2, r // 6))
-        draw.text((cx, cy), str(l["n"]), fill=TEAL, font=font, anchor="mm")
-    return image
+    return draw_markers(image, labels)
+
+
+def draw_zones(image, zones):
+    return draw_markers(image, [], zones)
 
 
 def _jpeg_data_uri(image):
@@ -142,7 +169,7 @@ def build_report(chair_id, record, pages_data, device, detections, handling=None
         for d in dets:
             n = label_at.get((d["part_id"], photo))
             md.append(f"| {names[d['part_id']]} | {photo} | {'yes' if d['visible'] else 'no'} | {_fmt(d['confidence'])}"
-                      f" | {_fmt(d['x'])} | {_fmt(d['y'])} | {n or ''} |  |")
+                      f" | {_fmt(d['x'])} | {_fmt(d['y'])} | {view.letter(n) if n else ''} |  |")
 
     if "handling" in record:
         zones = record["handling"]
@@ -190,22 +217,28 @@ def run(chair_id):
         stem = Path(photo).stem
         on_photo = [l for l in device["labels"] if l["photo"] == photo]
         with Image.open(resized_path(chair_id, stem)) as im:
-            # Zones first, so the gold part numbers stay on top and readable.
-            image = draw_zones(im.convert("RGB"), [l for l in on_photo if l.get("zone")])
-            image = draw_labels(image, [l for l in on_photo if not l.get("zone")])
+            # Zones first, so the part pins stay on top and readable.
+            image = draw_markers(im.convert("RGB"), [l for l in on_photo if not l.get("zone")],
+                                 [l for l in on_photo if l.get("zone")])
         path = out / f"labelled_{stem}.png"
         image.save(path)
         save_copy(chair_id, path)
         labelled[photo] = image
 
     v = view.passport(device, record, include_pending=True)
+    figures = {}
+    for s in record["steps"]:
+        fig = out / "figures" / f"{s['id']}.png"
+        if s.get("figure") and fig.is_file():
+            with Image.open(fig) as im:
+                figures[s["id"]] = _jpeg_data_uri(im.convert("RGB"))
     with_labels = [p for p in labelled if any(l["photo"] == p for l in device["labels"])]
     shown = with_labels or list(labelled)[:2]
     html = _env.get_template("card.html").render(
         record=record, device=device, v=v, fact_keys=FACT_KEYS,
         photos=[{"name": p, "src": _jpeg_data_uri(labelled[p]),
                  "zones": any(l["photo"] == p and l.get("zone") for l in device["labels"])} for p in shown],
-        sample_photos=bool(meta.get("sample_photos")),
+        sample_photos=bool(meta.get("sample_photos")), figures=figures,
     )
     (out / "card.html").write_text(html, encoding="utf-8")
     (out / "REPORT.md").write_text(build_report(chair_id, record, pages_data, device, detections, handling),

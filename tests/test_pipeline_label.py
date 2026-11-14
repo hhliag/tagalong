@@ -106,10 +106,9 @@ def test_exif_rotation_keeps_xy_on_the_right_place(tmp_path):
 
     # The LLM sees this same image, so it answers in its frame; drawing there hits the mark.
     drawn = render.draw_labels(image, [{"n": 1, "x": x, "y": y}])
-    centre = drawn.getpixel((round(x * image.width), round(y * image.height)))
-    ring = drawn.getpixel((round(x * image.width) + 10, round(y * image.height)))  # radius is 15 px here
-    assert centre != image.getpixel((round(x * image.width), round(y * image.height)))   # something drawn
-    assert ring == (0xC3, 0xAC, 0x86)                    # gold fill around the number
+    cx, cy = round(x * image.width), round(y * image.height)
+    assert drawn.getpixel((cx, cy)) == image.getpixel((cx, cy))       # the ring leaves the red mark visible
+    assert drawn.getpixel((cx + 15, cy)) == (0xC3, 0xAC, 0x86)        # gold ring around it (radius 15 px here)
 
 
 # ---------- the stage, through the offline provider ----------

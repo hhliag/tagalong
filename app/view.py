@@ -1,4 +1,6 @@
 """Turn a model record + chair record into what the card, print and uses pages show."""
+import re
+
 from . import rules
 
 PHASES = [
@@ -36,17 +38,81 @@ def split_labels(chair):
     return [l for l in labels if not l.get("zone")], [l for l in labels if l.get("zone")]
 
 
+# A leading list marker in an action ("1.", "2、", "3)", "①"); display only, the stored quote is unchanged.
+# A plain number needs punctuation after it, so "2 people lift" and "24V" stay whole.
+LIST_MARKER = re.compile(r"^\s*(?:[①-⑳]|\(?\d{1,2}[\.、\)）](?!\d))\s*")
+
+# Pins: a hollow ring on the part, the code in a badge outside it. The badge goes to the first side
+# that stays inside the photo and keeps clear of the other rings (same rule in HTML and in Pillow).
+PIN_SIDES = [("ur", 1, -1), ("ul", -1, -1), ("dr", 1, 1), ("dl", -1, 1)]
+PIN_OFFSET = 0.07   # badge centre from the ring centre, as a fraction of the photo, on each axis
+PIN_MARGIN = 0.05
+PIN_CLEAR = 0.12
+
+
+def clean_action(text):
+    return LIST_MARKER.sub("", text or "", count=1)
+
+
+def letter(n):
+    """1 -> A, 2 -> B ... 26 -> Z, 27 -> AA."""
+    code = ""
+    while n:
+        n, rest = divmod(n - 1, 26)
+        code = chr(65 + rest) + code
+    return code
+
+
+def label_key(label):
+    return label.get("id", label.get("n"))
+
+
+def pin_sides(points):
+    """points: [(key, x, y)] in 0-1 fractions -> {key: side}, side one of ur, ul, dr, dl."""
+    sides, badges = {}, []
+    for key, x, y in points:
+        others = [(px, py) for k, px, py in points if k != key] + badges
+        best = None
+        for name, sx, sy in PIN_SIDES:
+            bx, by = x + sx * PIN_OFFSET, y + sy * PIN_OFFSET
+            inside = PIN_MARGIN <= bx <= 1 - PIN_MARGIN and PIN_MARGIN <= by <= 1 - PIN_MARGIN
+            clear = min((((bx - ox) ** 2 + (by - oy) ** 2) ** 0.5 for ox, oy in others), default=1.0)
+            score = (inside, round(min(clear, PIN_CLEAR), 3))
+            if best is None or score > best[0]:
+                best = (score, name, (bx, by))
+        sides[key] = best[1]
+        badges.append(best[2])
+    return sides
+
+
+def photo_entry(file, labels, zones=()):
+    """One photo with its part pins (code + badge side) and zone pins."""
+    on = [l for l in labels if l["photo"] == file]
+    zs = [z for z in zones if z["photo"] == file]
+    sides = pin_sides([(label_key(l), l["x"], l["y"]) for l in on + zs])
+    return {"file": file,
+            "labels": [{**l, "code": letter(l["n"]), "side": sides[label_key(l)]} for l in on],
+            "zones": [{**z, "side": sides[label_key(z)]} for z in zs]}
+
+
 def photos_with_labels(chair, labels, count, zones=()):
     """Photos that carry the given labels or zones first (in label order), then the default views, up to `count`."""
     files = []
-    for label in sorted([*labels, *zones], key=lambda l: l.get("id", l.get("n"))):
+    for label in sorted([*labels, *zones], key=label_key):
         if label["photo"] and label["photo"] not in files:
             files.append(label["photo"])
     for f in DEFAULT_PHOTOS:
         if f not in files:
             files.append(f)
-    return [{"file": f, "labels": [l for l in labels if l["photo"] == f],
-             "zones": [z for z in zones if z["photo"] == f]} for f in files[:count]]
+    return [photo_entry(f, labels, zones) for f in files[:count]]
+
+
+def legend(labels, parts):
+    """One line per labelled part: (code, part name as written in the manual), in code order."""
+    seen = {}
+    for l in sorted(labels, key=lambda l: l["n"]):
+        seen.setdefault(l["n"], parts[l["part_id"]]["name"]["value"])
+    return [(letter(n), name) for n, name in seen.items()]
 
 
 def handling(record, zone_labels, include_pending=False):
@@ -92,11 +158,16 @@ def passport(chair, record, include_pending=False):
     steps = []
     for s in record["steps"]:
         verified = s["source"].get("verified") is True
+        n = label_n.get(s.get("part_id"))
+        part = parts.get(s.get("part_id"))
         steps.append({
             **s,
             "verified": verified,
             "must": bool(s.get("must_do")) and verified,  # §4.4: unverified is never must_do
-            "label_n": label_n.get(s.get("part_id")),
+            "label_n": n,
+            "label_code": letter(n) if n else None,
+            "action_display": clean_action(s["action"]),
+            "part_chip": {"code": letter(n) if n else None, "name": part["name"]["value"]} if part else None,
             "owner_confirmed": s.get("part_id") in confirmed_parts,
         })
     must = sorted((s for s in steps if s["must"]), key=lambda s: phase_order[s["phase"]])[:MAX_MUST_DO]
@@ -120,6 +191,7 @@ def passport(chair, record, include_pending=False):
         "photos": photos_with_labels(chair, confirmed, max(2, len({l["photo"] for l in confirmed + shown_zones})),
                                      shown_zones),
         "handling": handling(record, zone_labels, include_pending),
+        "legend": legend(numbered, parts),
         "must": must,
         "must_groups": [(t, g) for t, g in must_groups if g],
         "more": [s for s in steps if s["id"] not in must_ids],
