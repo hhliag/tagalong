@@ -10,8 +10,16 @@ def _read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _files(kind):
+    """{stem: path} for library/ or devices/: pipeline output wins over the hand-written fixture."""
+    found = {p.stem: p for p in sorted((config.FIXTURES_DIR / kind).glob("*.json"))}
+    out_dir = config.LIBRARY_DIR if kind == "library" else config.DEVICES_DIR
+    found.update({p.stem: p for p in sorted(out_dir.glob("*.json"))})
+    return found
+
+
 def records():
-    return [_read(p) for p in sorted(config.LIBRARY_DIR.glob("*.json"))]
+    return [_read(p) for p in _files("library").values()]
 
 
 def record(record_id):
@@ -31,16 +39,17 @@ def find_record(make, model):
 
 
 def chair_ids():
-    return [p.stem for p in sorted(config.DEVICES_DIR.glob("*.json"))]
+    return sorted(_files("devices"))
 
 
 def chair(chair_id):
-    if chair_id not in chair_ids():
+    source = _files("devices").get(chair_id)
+    if source is None:
         return None
     state = config.STATE_DIR / f"{chair_id}.json"
     if state.exists():
         return _read(state)
-    data = _read(config.DEVICES_DIR / f"{chair_id}.json")
+    data = _read(source)
     data["stages"] = []  # build stages finished so far
     return data
 
@@ -51,5 +60,9 @@ def save_chair(data):
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def reset():
-    shutil.rmtree(config.STATE_DIR, ignore_errors=True)
+def reset(chair_id=None):
+    """Forget runtime changes: for one chair, or for all."""
+    if chair_id:
+        (config.STATE_DIR / f"{chair_id}.json").unlink(missing_ok=True)
+    else:
+        shutil.rmtree(config.STATE_DIR, ignore_errors=True)

@@ -58,8 +58,8 @@ def test_battery_removed(removed_parts, expected):
 
 
 def _fixture():
-    record = json.loads((config.LIBRARY_DIR / "whill-model-c2.json").read_text())
-    chair = json.loads((config.DEVICES_DIR / "chair-a.json").read_text())
+    record = json.loads((config.FIXTURES_DIR / "library" / "whill-model-c2.json").read_text())
+    chair = json.loads((config.FIXTURES_DIR / "devices" / "chair-a.json").read_text())
     return record, chair
 
 

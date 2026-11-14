@@ -9,3 +9,6 @@ data/
 *.jpeg
 *.png
 .DS_Store
+# pipeline working files and saved copies: they hold full manual text and our photos
+out/
+saved/
