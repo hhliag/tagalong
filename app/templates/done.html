@@ -5,8 +5,10 @@
   <div class="done-check" aria-hidden="true">✓</div>
   <h1>{{ info.headline }}</h1>
   <p class="done-summary">{{ summary }}</p>
+  {% if qr %}
   <div class="done-qr">{{ qr|safe }}</div>
-  <p class="done-scan">Scan to continue on your phone</p>
+  <p class="done-scan"><b>Wheelchair passport · tag {{ chair.tag_id }}</b><br>Ramp handler: scan to see how to handle this chair</p>
+  {% endif %}
   <a class="btn btn-gold btn-big" href="{{ next_url }}">{{ info.button }}</a>
 </section>
 {% endblock %}

@@ -38,18 +38,21 @@ def test_step_done_pages(step, headline, button, next_url):
     assert r.status_code == 200
     assert headline in r.text
     assert f'<a class="btn btn-gold btn-big" href="{next_url}">{button}</a>' in r.text
-    assert "Scan to continue on your phone" in r.text and "<svg" in r.text
+    has_qr = step == "confirmed"           # only the passport QR, between /confirm and /passport
+    assert ("<svg" in r.text) == has_qr and ("Ramp handler: scan" in r.text) == has_qr
     assert "Concept" in r.text
 
 
-def test_qr_encodes_the_absolute_next_url(monkeypatch):
+def test_passport_qr_opens_the_crew_view(monkeypatch):
     monkeypatch.setattr(config, "PUBLIC_URL", "https://example.test")
     seen = []
     import segno
     real = segno.make
     monkeypatch.setattr(segno, "make", lambda content, **kw: seen.append(content) or real(content, **kw))
-    assert get("/done/chair-a/chosen").status_code == 200
-    assert seen == ["https://example.test/build/chair-a"]
+    decide_all()
+    page = get("/done/chair-a/confirmed").text
+    tag = FIXTURE_CHAIR["tag_id"]
+    assert seen == [f"https://example.test/crew/{tag}"] and f"tag {tag}" in page   # same QR as the printed card
 
 
 def test_guard_redirects_when_the_step_is_not_done():

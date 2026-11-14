@@ -107,7 +107,8 @@ def passport(request: Request, chair_id: str):
 
 @app.get("/done/{chair_id}/{step}")
 def step_done(request: Request, chair_id: str, step: str):
-    """Between the main pages: what was just done, a QR to carry on on the phone, the next button."""
+    """Between the main pages: what was just done and the next button. After "confirmed" it also shows
+    the passport QR the ramp handler scans (the same crew view as the printed card's QR)."""
     if step not in view.STEP_DONE:
         raise HTTPException(404, "Unknown step")
     chair = _chair(chair_id)
@@ -119,7 +120,7 @@ def step_done(request: Request, chair_id: str, step: str):
     if fast_q(request):
         return RedirectResponse(next_url + fast_q(request), status_code=303)
     record = _record(chair["record_id"])
-    qr = segno.make(public_base(request) + next_url, error="m").svg_inline(dark="#044B52", omitsize=True)
+    qr = crew_qr(request, chair) if step == "confirmed" else None
     return _page(request, "done.html", flow=info["current"], chair=chair, info=info, next_url=next_url,
                  summary=view.step_summary(step, chair, record), qr=qr)
 
@@ -129,10 +130,14 @@ def crew_url(request, chair):
     return f"{public_base(request)}/crew/{chair['tag_id']}"
 
 
+def crew_qr(request, chair):
+    return segno.make(crew_url(request, chair), error="m").svg_inline(dark="#044B52", omitsize=True)
+
+
 @app.get("/passport/{chair_id}/print")
 def passport_print(request: Request, chair_id: str):
     ctx = _passport_ctx(chair_id)
-    qr = segno.make(crew_url(request, ctx["chair"]), error="m").svg_inline(dark="#044B52", omitsize=True)
+    qr = crew_qr(request, ctx["chair"])
     return _page(request, "print.html", qr=qr, **ctx)
 
 
