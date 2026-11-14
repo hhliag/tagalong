@@ -38,10 +38,13 @@ def photos_with_labels(chair, labels, count):
     return [{"file": f, "labels": [l for l in labels if l["photo"] == f]} for f in files[:count]]
 
 
-def passport(chair, record):
+def passport(chair, record, include_pending=False):
+    """include_pending: number steps by pending labels too (the pipeline's card, before the owner confirms)."""
     parts = {p["id"]: p for p in record["parts"]}
     confirmed = [l for l in chair["labels"] if l["status"] == "confirmed"]
-    label_n = {l["part_id"]: l["n"] for l in confirmed}
+    numbered = [l for l in chair["labels"] if l["status"] != "rejected"] if include_pending else confirmed
+    label_n = {l["part_id"]: l["n"] for l in numbered}
+    confirmed_parts = {l["part_id"] for l in confirmed}
     phase_order = {key: i for i, (key, _) in enumerate(PHASES)}
 
     steps = []
@@ -52,7 +55,7 @@ def passport(chair, record):
             "verified": verified,
             "must": bool(s.get("must_do")) and verified,  # §4.4: unverified is never must_do
             "label_n": label_n.get(s.get("part_id")),
-            "owner_confirmed": s.get("part_id") in label_n,
+            "owner_confirmed": s.get("part_id") in confirmed_parts,
         })
     must = sorted((s for s in steps if s["must"]), key=lambda s: phase_order[s["phase"]])[:MAX_MUST_DO]
     must_ids = {s["id"] for s in must}
