@@ -38,6 +38,10 @@ def provider():
     return _ctx["provider"]
 
 
+def model_name():
+    return _ctx["model"]
+
+
 def parse_json(text):
     """Parse a JSON object from a reply that may be wrapped in ``` fences or short prose."""
     text = text.strip()
