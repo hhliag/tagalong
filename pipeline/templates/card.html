@@ -62,7 +62,6 @@
   .fig { margin: 8px 0 0; color: var(--soft); font-size: .8rem; }
   .fig img { display: block; max-width: 100%; max-height: 260px; background: #fff; border-radius: 8px; margin-bottom: 4px; }
   .legend { margin: 4px 0 0; font-size: .8rem; color: var(--soft); display: flex; gap: 6px; align-items: center; }
-  .no-lift { font-weight: 700; color: var(--warn); }
   @media (max-width: 480px) {
     .photos { grid-template-columns: 1fr; }
     th, td { display: block; border: 0; padding: 2px 0; width: auto; }
@@ -109,7 +108,7 @@
   </table>
 
   {% set h = v.handling %}
-  {% if h %}
+  {% if h and (h.hold or h.no_hold) %}
   <section class="handling">
     <h2>How to hold this chair</h2>
     {% if h.hold %}
@@ -117,7 +116,6 @@
     <ul class="zl hold">{% for z in h.hold %}<li><b>{{ z.part_name }}</b> · {{ z.reason }}
       <p class="meta"><span class="chip chip-ai">AI-extracted · page verified</span><span class="pg">p.&nbsp;{{ z.source.page }}</span></p></li>{% endfor %}</ul>
     {% endif %}
-    {% if h.no_lift_points %}<p class="no-lift">The manual gives no lifting points. Ask the owner.</p>{% endif %}
     {% if h.no_hold %}
     <h3 class="no-hold-title"><span class="zm no_hold">✗</span> Do not lift by</h3>
     <ul class="zl no_hold">{% for z in h.no_hold %}<li><b>{{ z.part_name }}</b> · {{ z.reason }}

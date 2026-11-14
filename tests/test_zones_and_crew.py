@@ -68,18 +68,22 @@ def test_pending_and_rejected_zones_never_appear(status):
     assert "2 handling zones hidden" in client.get("/passport/chair-a").text
 
 
-def test_handling_missing_shows_ask_the_owner_and_no_markers():
+def test_handling_missing_shows_no_block_and_no_markers():
     install(handling=[])
     for path in ("/passport/chair-a", "/passport/chair-a/print", "/crew/AP-7Q4K"):
         page = client.get(path).text
-        assert "The manual gives no lifting points. Ask the owner." in page
+        assert "no lifting points" not in page
+        assert "How to hold this chair" not in page and 'class="sheet-zones"' not in page
         assert 'id="box-' not in page and "pin zone" not in page
 
 
-def test_only_no_hold_zones_still_says_no_lifting_points():
+def test_only_no_hold_zones_shows_no_lift_here_block():
     install(zone_status=("confirmed",), handling=[ZONES[1]])
-    page = client.get("/passport/chair-a").text
-    assert "The manual gives no lifting points. Ask the owner." in page and "Not by the armrests." in page
+    for path in ("/passport/chair-a", "/passport/chair-a/print"):
+        page = client.get(path).text
+        assert "no lifting points" not in page
+        assert 'class="hold-title"' not in page and '<span class="zbadge hold"></span> Lift here</p>' not in page
+        assert "Do not lift by" in page and ("Not by the armrests." in page or "Armrest" in page)
 
 
 def test_confirm_lists_zones_with_question_marks():

@@ -27,13 +27,12 @@
     </div>
     <div class="sheet-right">
       {% set h = v.handling %}
-      {% if h %}
+      {% if card.hold or card.no_hold %}
       <div class="sheet-zones">
         {% if h.hold %}
         <p class="sz-title"><span class="zbadge hold"></span> Lift here</p>
         <ul>{% for z in card.hold %}<li>{{ z.part_name }} <small>p.&nbsp;{{ z.source.page }}</small></li>{% endfor %}</ul>
         {% endif %}
-        {% if h.no_lift_points %}<p class="sz-none">The manual gives no lifting points. Ask the owner.</p>{% endif %}
         {% if h.no_hold %}
         <p class="sz-title"><span class="zbadge no_hold"></span> Do not lift by</p>
         <ul>{% for z in card.no_hold %}<li>{{ z.part_name }} <small>p.&nbsp;{{ z.source.page }}</small></li>{% endfor %}</ul>

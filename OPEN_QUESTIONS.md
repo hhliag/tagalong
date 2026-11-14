@@ -38,7 +38,7 @@ Where DESIGN.md was unclear, the simplest option was chosen and written here. Ch
 23. **Letters** come from `n` at display time (1 → A, 27 → AA); steps are numbered 1, 2, 3 through the Must do list. A step whose part has no shown label gets a chip with the part name only.
 24. **Pins** are hollow rings with the letter in a badge outside: 3% of the short side in the PNGs, 14 px on the web pages (bigger on /confirm). `app.view.pin_sides` picks the badge side for both: the first of up-right, up-left, down-right, down-left that stays inside the photo, preferring the most room. Web markers are HTML; PNGs are drawn with Pillow (check and cross as lines).
 25. **Zones.** Each verified hold / no_hold zone gets a marker on every photo where its part shows (`zone`, `zone_id`, `box`), numbered after the part labels so the same API works. Boxes are outlines (solid green / dashed red). A zone is on the passport when at least one of its markers is confirmed; the pipeline's card.html shows pending ones. Parts the handling stage adds get normal part labels too.
-26. **"The manual gives no lifting points. Ask the owner."** shows when no verified hold zone exists, also when there are no_hold zones.
+26. **No lifting points:** when no verified hold zone exists, the "Lift here" part is left out (no "Ask the owner" line). With no zones to show at all, the "How to hold this chair" box and the print's zone box are left out too.
 27. **Trust chips.** Verified steps show `AI-extracted · page verified`; `Owner-confirmed` is added when a label of that step's part is confirmed.
 
 ## Pipeline

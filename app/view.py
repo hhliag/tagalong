@@ -29,7 +29,6 @@ def chair_name(chair):
 
 
 MAX_PRINT_ZONES = 3
-NO_LIFT_POINTS = "The manual gives no lifting points. Ask the owner."
 
 
 def split_labels(chair):
@@ -138,7 +137,6 @@ def handling(record, zone_labels, include_pending=False):
     return {
         "hold": items["hold"],
         "no_hold": items["no_hold"],
-        "no_lift_points": not any(z["kind"] == "hold" for z in record["handling"]),
         "hidden_count": len(record["handling"]) - shown,
     }
 

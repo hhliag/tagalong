@@ -253,7 +253,6 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 .zone-list.hold li { border-left: 4px solid #1E8E3E; }
 .zone-list.no_hold li { border-left: 4px solid #C5221F; }
 .zone-list .step-meta { margin-top: 4px; }
-.no-lift { font-weight: 700; color: var(--warn); }
 .confirm-zones-title { margin-top: 24px; }
 
 /* Crew */
@@ -408,7 +407,6 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 .sheet-zones ul { margin: 0 0 1mm; padding-left: 9mm; }
 .sheet-zones small { font-weight: 400; color: #456; font-size: 8pt; }
 .sz-title { margin: 0.5mm 0; display: flex; align-items: center; gap: 2mm; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.05em; }
-.sz-none { margin: 0.5mm 0; font-size: 9.5pt; }
 .sheet .zbadge { width: 5mm; height: 5mm; font-size: 8pt; }
 .sheet .pin-badge { width: 5mm; height: 5mm; margin: -2.5mm 0 0 -2.5mm; font-size: 8pt; }
 .sheet .label-legend { margin: 0; font-size: 8.5pt; gap: 0.5mm 3mm; }

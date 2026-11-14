@@ -57,7 +57,7 @@ data-id="{{ l.id }}" role="button" tabindex="0" aria-label="{{ l.status }}"
 {%- endmacro %}
 
 {% macro handling_box(record_id, h, limit=none, card=none) -%}
-{% if h %}
+{% if h and (h.hold or h.no_hold or h.hidden_count) %}
 <section class="handling">
   <h2>How to hold this chair</h2>
   {% if h.hold %}
@@ -66,7 +66,6 @@ data-id="{{ l.id }}" role="button" tabindex="0" aria-label="{{ l.status }}"
     {% for z in (h.hold[:limit] if limit else h.hold) %}{{ zone_item(record_id, z, card and z.id in card.zone_ids) }}{% endfor %}
   </ul>
   {% endif %}
-  {% if h.no_lift_points %}<p class="no-lift">The manual gives no lifting points. Ask the owner.</p>{% endif %}
   {% if h.no_hold %}
   <h3 class="no-hold-title"><span class="zbadge no_hold"></span> Do not lift by</h3>
   <ul class="zone-list no_hold">

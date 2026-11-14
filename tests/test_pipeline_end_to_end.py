@@ -77,7 +77,6 @@ def test_offline_run_end_to_end(capsys):
     assert 'class="concept"' in card
 
     assert "How to hold this chair" in card and "Do not lift by" in card
-    assert "The manual gives no lifting points" not in card       # the record has a hold zone
     report = (out / "REPORT.md").read_text()
     assert "Handling zones: 1 hold, 1 no_hold" in report and "Lift by the cushion." in report
     assert "| zone | kind | part |" in report
