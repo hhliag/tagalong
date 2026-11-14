@@ -19,9 +19,9 @@ WHOLE_WORD = {"wh", "key"}
 # The same topics in Chinese (Traditional, then Simplified where it differs), for manuals like the Kovital ones.
 # Chinese has no spaces between words, so these match anywhere.
 KEYWORDS_ZH = [
-    "離合", "离合", "手推", "手動模式", "手动模式", "剎車", "刹車", "刹车", "電池", "电池", "鋰", "锂",
+    "離合", "离合", "制動杆", "制动杆", "嚙合", "啮合", "脫開", "脱开", "手推", "推動", "推动", "手動", "手动", "剎車", "刹車", "刹车", "電池", "电池", "鋰", "锂",
     "電壓", "电压", "關閉電源", "关闭电源", "關機", "关机", "開關", "开关", "鑰匙", "钥匙", "抬起", "提起",
-    "搬運", "搬运", "運輸", "运输", "飛機", "飞机", "航空", "折疊", "折叠", "拆卸", "拆下", "取下", "卸下",
+    "搬運", "搬运", "運輸", "运输", "運送", "运送", "飛機", "飞机", "航空", "折疊", "折叠", "拆卸", "拆下", "取下", "卸下",
     "重量", "尺寸", "警告", "注意",
 ]
 SPEC_TERMS = ["specification", "weight", "dimension", "voltage", "kg", "mm", "ah", "wh", "km/h"]
