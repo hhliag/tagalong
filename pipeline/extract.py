@@ -63,7 +63,7 @@ SCHEMA = {
     },
 }
 
-RULES = """You copy facts and handling steps from a wheelchair maker's manual for airline ground staff.
+RULES = """You copy facts and handling steps from a wheelchair manufacturer's manual for airline ground staff.
 
 RULES
 1. Copy every "quote" EXACTLY from the page text: at most 25 words (Chinese or Japanese: at most 60 characters), no paraphrase, no translation, no fixing typos, no joining text from different places.

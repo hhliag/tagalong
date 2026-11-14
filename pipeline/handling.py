@@ -21,7 +21,7 @@ KEYWORDS = [
 ]
 _KEYWORD_RES = [re.compile(re.escape(k), re.IGNORECASE) for k in KEYWORDS]
 
-RULES = """You find HANDLING ZONES in a wheelchair maker's manual for airline ground staff:
+RULES = """You find HANDLING ZONES in a wheelchair manufacturer's manual for airline ground staff:
 where the chair may be held or lifted ("hold"), and which parts must NOT be held or lifted by ("no_hold").
 
 RULES

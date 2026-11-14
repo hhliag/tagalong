@@ -4,7 +4,7 @@ v2 replaces v1. It builds only the demo in `claude/15_DEMO.md`. Every build sess
 
 ## 1. What we build
 
-A web app where a judge picks a real chair (a set of photos), and the app builds that chair's **passport** live: it reads the model plate, finds the maker's manual, copies the handling steps with page numbers, checks every quote, and places the parts on the photos. The owner confirms each label. The result is a card on screen, a printable card, and a strip of other uses of the same record.
+A web app where a judge picks a real chair (a set of photos), and the app builds that chair's **passport** live: it reads the model plate, finds the manufacturer's manual, copies the handling steps with page numbers, checks every quote, and places the parts on the photos. The owner confirms each label. The result is a card on screen, a printable card, and a strip of other uses of the same record.
 
 Core rule: **retrieve, don't generate.** The LLM may only copy a step from the manual and shorten its own quote. It never adds a step. A label or step that is not confirmed is never shown as fact.
 

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Pick a chair</h1>
-<p class="lead">The app reads the model plate, finds the maker's manual and builds the chair's passport.</p>
+<p class="lead">The app reads the model plate, finds the manufacturer's manual and builds the chair's passport.</p>
 <div class="picker">
   {% for c in cards %}
   <a class="card pick-card" href="{{ flow_link(request, c.chair.chair_id, 'chosen') }}">

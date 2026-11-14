@@ -36,7 +36,7 @@ def build_prompt(view_name, parts, size, gemini, zone_kinds=None):
     zone_kinds = zone_kinds or {}
     lines = [
         f"This is one photo of a wheelchair: the {view_name}. It is {size[0]} x {size[1]} pixels.",
-        "Find each part below in this photo. The 'where' text is from the maker's manual.",
+        "Find each part below in this photo. The 'where' text is from the manufacturer's manual.",
         "Look only at the wheelchair in the centre of the photo, the one the photo is about. "
         "Ignore other wheelchairs in the background.",
         "",

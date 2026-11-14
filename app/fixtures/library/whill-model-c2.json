@@ -4,7 +4,7 @@
   "model": "Model C2",
   "aliases": ["Model C 2", "C2"],
   "chair_type": "power_modular",
-  "fixture_note": "Hand-written M1 sample. Quotes, pages and figures are placeholders, not yet checked against the maker's manual.",
+  "fixture_note": "Hand-written M1 sample. Quotes, pages and figures are placeholders, not yet checked against the manufacturer's manual.",
   "manual": { "file": "whill-model-c2.pdf", "url": null, "sha256": null, "pages": 0 },
   "parts": [
     {

@@ -252,7 +252,7 @@ FLOW_PATHS = {"choose": "/", "build": "/build/{c}", "confirm": "/confirm/{c}", "
 # step -> headline, button, next page, the flow position the page sits before (its "current" step)
 STEP_DONE = {
     "chosen": {"headline": "Wheelchair selected", "button": "Build the passport", "next": "/build/{c}", "current": "build"},
-    "built": {"headline": "Passport built from the maker's manual", "button": "Check the labels",
+    "built": {"headline": "Passport built from the manufacturer's manual", "button": "Check the labels",
               "next": "/confirm/{c}", "current": "confirm"},
     "confirmed": {"headline": "Wheelchair information confirmed", "button": "Go to wheelchair passport",
                   "next": "/passport/{c}", "current": "passport"},

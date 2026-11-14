@@ -1,6 +1,6 @@
 # TagAlong
 
-A wheelchair **passport** built from the maker's manual: handling steps with page numbers, parts marked on photos and confirmed by the owner, a printable A5 card, and other views of the same record. The design contract is in [DESIGN.md](DESIGN.md).
+A wheelchair **passport** built from the manufacturer's manual: handling steps with page numbers, parts marked on photos and confirmed by the owner, a printable A5 card, and other views of the same record. The design contract is in [DESIGN.md](DESIGN.md).
 
 Core rule: **retrieve, don't generate.** Every step and fact is copied from the manual, with its page number.
 

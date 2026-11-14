@@ -28,7 +28,7 @@ def get(url):
 
 @pytest.mark.parametrize("step, headline, button, next_url", [
     ("chosen", "Wheelchair selected", "Build the passport", "/build/chair-a"),
-    ("built", "Passport built from the maker&#39;s manual", "Check the labels", "/confirm/chair-a"),
+    ("built", "Passport built from the manufacturer&#39;s manual", "Check the labels", "/confirm/chair-a"),
     ("confirmed", "Wheelchair information confirmed", "Go to wheelchair passport", "/passport/chair-a"),
 ])
 def test_step_done_pages(step, headline, button, next_url):
