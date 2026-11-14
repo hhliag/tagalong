@@ -308,7 +308,38 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 .not-found { color: var(--warn); font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
+/* Step bar: 1 Choose chair · 2 Build passport · 3 Confirm · 4 Passport */
+.stepbar { background: var(--teal-deep); border-bottom: 1px solid rgba(195, 172, 134, 0.35); padding: 10px 16px; }
+.stepbar ol { list-style: none; margin: 0 auto; padding: 0; max-width: 760px; display: flex; gap: 8px; }
+.stepbar li { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.stepbar li a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.step-dot { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--ink-soft); font-weight: 700; font-size: 0.9rem; }
+.step-name { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-done .step-dot { background: #005D63; border-color: #005D63; color: #fff; }
+.step-done .step-name { color: var(--ink); }
+.step-current .step-dot { background: #C3AC86; border-color: #C3AC86; color: var(--teal); }
+.step-current .step-name { color: #C3AC86; font-weight: 700; }
+.step-later { color: var(--ink-soft); }
+.step-later .step-dot { background: transparent; }
+
+/* Step-done page */
+.done-page { text-align: center; max-width: 480px; margin: 16px auto 0; }
+.done-check { width: 96px; height: 96px; margin: 8px auto 16px; border-radius: 50%; background: #005D63;
+  border: 3px solid var(--jade-bright); display: grid; place-items: center; font-size: 3.2rem; color: #fff; }
+.done-summary { color: var(--ink-soft); font-size: 1.05rem; margin: 0 0 20px; }
+.done-qr { width: 180px; margin: 0 auto; padding: 10px; background: #fff; border-radius: 12px; }
+.done-qr svg { display: block; width: 100%; height: auto; }
+.done-scan { color: var(--ink-soft); font-size: 0.9rem; margin: 8px 0 0; }
+
 /* Phone width (390 px) */
+/* Phone: step numbers only, plus the current step's name */
+@media (max-width: 560px) {
+  .stepbar li { flex: none; }
+  .stepbar li.step-current { flex: 1 1 auto; }
+  .stepbar li:not(.step-current) .step-name { display: none; }
+}
+
 @media (max-width: 480px) {
   h1 { font-size: 1.35rem; }
   .photos { grid-template-columns: 1fr; }

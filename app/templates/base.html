@@ -18,6 +18,19 @@
     <a class="nav-link" href="/crew">Crew lookup</a>
   </header>
   {% endblock %}
+  {% if steps %}
+  <nav class="stepbar" aria-label="Progress">
+    <ol>
+      {% for s in steps %}
+      <li class="step-{{ s.state }}"{% if s.state == 'current' %} aria-current="step"{% endif %}>
+        {% if s.href %}<a href="{{ s.href }}">{% endif %}
+        <span class="step-dot">{{ '✓' if s.state == 'done' else s.num }}</span><span class="step-name">{{ s.name }}</span>
+        {% if s.href %}</a>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  {% endif %}
   <main class="wrap">
     {% block content %}{% endblock %}
   </main>

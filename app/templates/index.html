@@ -4,7 +4,7 @@
 <p class="lead">The app reads the model plate, finds the maker's manual and builds the chair's passport.</p>
 <div class="picker">
   {% for c in cards %}
-  <a class="card pick-card" href="/build/{{ c.chair.chair_id }}">
+  <a class="card pick-card" href="{{ flow_link(request, c.chair.chair_id, 'chosen') }}">
     <img src="/photo/{{ c.chair.chair_id }}/front.jpg" alt="Front view of a wheelchair">
     <div class="pick-body">
       <span class="pick-id">{{ c.chair.chair_id|replace('-', ' ')|title }}</span>

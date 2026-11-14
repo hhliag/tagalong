@@ -16,7 +16,7 @@
 </ol>
 
 <div id="error-card" class="card error-card" hidden></div>
-<a id="next" class="btn btn-jade btn-big" href="/confirm/{{ chair.chair_id }}" hidden>Confirm the labels →</a>
+<a id="next" class="btn btn-jade btn-big" href="{{ flow_link(request, chair.chair_id, 'built') }}" hidden>Continue →</a>
 {{ sample_note() }}
 {% endblock %}
 {% block scripts %}<script src="/static/build.js"></script>{% endblock %}

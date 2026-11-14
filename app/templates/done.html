@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block crumbs %}<span class="crumb">Step done</span>{% endblock %}
+{% block content %}
+<section class="done-page">
+  <div class="done-check" aria-hidden="true">✓</div>
+  <h1>{{ info.headline }}</h1>
+  <p class="done-summary">{{ summary }}</p>
+  <div class="done-qr">{{ qr|safe }}</div>
+  <p class="done-scan">Scan to continue on your phone</p>
+  <a class="btn btn-gold btn-big" href="{{ next_url }}">{{ info.button }}</a>
+</section>
+{% endblock %}

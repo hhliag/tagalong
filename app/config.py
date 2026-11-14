@@ -16,4 +16,5 @@ SAVED_DIR = ROOT / "saved"       # copy of every pipeline result (DESIGN §4)
 
 HOST = os.environ.get("HOST", "0.0.0.0")
 PORT = int(os.environ.get("PORT", "8000"))
-PUBLIC_URL = os.environ.get("PUBLIC_URL", "").rstrip("/")
+# Base of the links in QR codes. PUBLIC_BASE_URL, or the older name PUBLIC_URL; empty = the request's own address.
+PUBLIC_URL = (os.environ.get("PUBLIC_BASE_URL") or os.environ.get("PUBLIC_URL", "")).rstrip("/")

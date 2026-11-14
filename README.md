@@ -53,7 +53,7 @@ The app listens on `0.0.0.0:8000`.
 2. Start the app: `.venv/bin/python -m app`
 3. In a second terminal: `cloudflared tunnel --url http://localhost:8000`
 4. Copy the `https://<random>.trycloudflare.com` URL it prints. That is the public link.
-5. To make the QR on the printed card point there, put `PUBLIC_URL=https://<random>.trycloudflare.com` in `.env` and restart the app (step 2). The quick-tunnel URL changes every time cloudflared restarts.
+5. To make the QR on the printed card point there, put `PUBLIC_BASE_URL=https://<random>.trycloudflare.com` in `.env` (the older name `PUBLIC_URL` still works) and restart the app (step 2). The quick-tunnel URL changes every time cloudflared restarts.
 
 Stop the tunnel with Ctrl-C when you are done: anyone with the link can open the app.
 

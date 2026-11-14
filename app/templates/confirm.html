@@ -39,7 +39,7 @@
 {% endif %}
 
 <a id="done" class="btn btn-jade btn-big{% if chair.labels|selectattr('status', 'equalto', 'pending')|list %} disabled{% endif %}"
-   href="/passport/{{ chair.chair_id }}">Done</a>
+   href="{{ flow_link(request, chair.chair_id, 'confirmed') }}">Done</a>
 {{ sample_note() }}
 {% endblock %}
 {% block scripts %}<script src="/static/confirm.js"></script>{% endblock %}

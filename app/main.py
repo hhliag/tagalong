@@ -22,6 +22,23 @@ templates = Jinja2Templates(directory=HERE / "templates")
 templates.env.globals["letter"] = view.letter   # part codes A, B, C... from n
 
 
+def fast_q(request):
+    """"?fast=1" when the page was opened with it: every flow link keeps it and skips the step-done pages."""
+    return "?fast=1" if request.query_params.get("fast") == "1" else ""
+
+
+def flow_link(request, chair_id, step):
+    """Where a page sends the owner after `step` (chosen | built | confirmed): its step-done page, or with
+    ?fast=1 straight to the next page."""
+    if fast_q(request):
+        return view.STEP_DONE[step]["next"].format(c=chair_id) + fast_q(request)
+    return f"/done/{chair_id}/{step}"
+
+
+templates.env.globals["fast_q"] = fast_q
+templates.env.globals["flow_link"] = flow_link
+
+
 def _chair(chair_id):
     chair = store.chair(chair_id)
     if chair is None:
@@ -36,8 +53,16 @@ def _record(record_id):
     return record
 
 
-def _page(request, name, **ctx):
+def _page(request, name, flow=None, **ctx):
+    """flow: the step this page is in (view.FLOW key); draws the step bar."""
+    if flow:
+        chair = ctx.get("chair")
+        ctx["steps"] = view.step_bar(flow, chair["chair_id"] if chair else None, fast_q(request))
     return templates.TemplateResponse(request, name, ctx)
+
+
+def public_base(request):
+    return config.PUBLIC_URL or str(request.base_url).rstrip("/")
 
 
 def _passport_ctx(chair_id):
@@ -52,12 +77,12 @@ def _passport_ctx(chair_id):
 def index(request: Request):
     chairs = [store.chair(cid) for cid in store.chair_ids()]
     cards = [{"chair": c, "name": view.chair_name(c)} for c in chairs]
-    return _page(request, "index.html", cards=cards)
+    return _page(request, "index.html", flow="choose", cards=cards)
 
 
 @app.get("/build/{chair_id}")
 def build(request: Request, chair_id: str):
-    return _page(request, "build.html", chair=_chair(chair_id))
+    return _page(request, "build.html", flow="build", chair=_chair(chair_id))
 
 
 @app.get("/confirm/{chair_id}")
@@ -69,7 +94,7 @@ def confirm(request: Request, chair_id: str):
     files = CONFIRM_VIEWS + sorted({l["photo"] for l in chair["labels"] if l["photo"]} - set(CONFIRM_VIEWS))
     zones = {z["id"]: z for z in record.get("handling") or []}
     return _page(
-        request, "confirm.html", chair=chair, part_labels=part_labels, zone_labels=zone_labels, zones=zones,
+        request, "confirm.html", flow="confirm", chair=chair, part_labels=part_labels, zone_labels=zone_labels, zones=zones,
         parts={p["id"]: p for p in record["parts"]},
         photos=[view.photo_entry(f, part_labels, zone_labels) for f in files],
     )
@@ -77,13 +102,31 @@ def confirm(request: Request, chair_id: str):
 
 @app.get("/passport/{chair_id}")
 def passport(request: Request, chair_id: str):
-    return _page(request, "passport.html", **_passport_ctx(chair_id))
+    return _page(request, "passport.html", flow="passport", **_passport_ctx(chair_id))
+
+
+@app.get("/done/{chair_id}/{step}")
+def step_done(request: Request, chair_id: str, step: str):
+    """Between the main pages: what was just done, a QR to carry on on the phone, the next button."""
+    if step not in view.STEP_DONE:
+        raise HTTPException(404, "Unknown step")
+    chair = _chair(chair_id)
+    unfinished = view.step_is_done(step, chair)
+    if unfinished:
+        return RedirectResponse(unfinished + fast_q(request), status_code=303)
+    info = view.STEP_DONE[step]
+    next_url = info["next"].format(c=chair_id)
+    if fast_q(request):
+        return RedirectResponse(next_url + fast_q(request), status_code=303)
+    record = _record(chair["record_id"])
+    qr = segno.make(public_base(request) + next_url, error="m").svg_inline(dark="#044B52", omitsize=True)
+    return _page(request, "done.html", flow=info["current"], chair=chair, info=info, next_url=next_url,
+                 summary=view.step_summary(step, chair, record), qr=qr)
 
 
 def crew_url(request, chair):
     """What the QR on the printed card opens: the crew view, found by the tag ID printed next to it."""
-    base = config.PUBLIC_URL or str(request.base_url).rstrip("/")
-    return f"{base}/crew/{chair['tag_id']}"
+    return f"{public_base(request)}/crew/{chair['tag_id']}"
 
 
 @app.get("/passport/{chair_id}/print")
@@ -115,7 +158,7 @@ def crew_view(request: Request, tag_id: str):
 def uses(request: Request, chair_id: str, use: str):
     if use not in USES:
         raise HTTPException(404, "Unknown use")
-    return _page(request, f"uses_{use}.html", use_title=USES[use], **_passport_ctx(chair_id))
+    return _page(request, f"uses_{use}.html", flow="passport", use_title=USES[use], **_passport_ctx(chair_id))
 
 
 @app.get("/manual/{record_id}/{page}")

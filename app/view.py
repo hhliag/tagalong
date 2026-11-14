@@ -242,3 +242,58 @@ def fact_rows(facts, wh):
             "cites": removable,
         },
     }
+
+
+# ---------- page flow: step bar and step-done pages ----------
+
+FLOW = [("choose", "Choose chair"), ("build", "Build passport"), ("confirm", "Confirm"), ("passport", "Passport")]
+FLOW_PATHS = {"choose": "/", "build": "/build/{c}", "confirm": "/confirm/{c}", "passport": "/passport/{c}"}
+
+# step -> headline, button, next page, the flow position the page sits before (its "current" step)
+STEP_DONE = {
+    "chosen": {"headline": "Wheelchair selected", "button": "Build the passport", "next": "/build/{c}", "current": "build"},
+    "built": {"headline": "Passport built from the maker's manual", "button": "Check the labels",
+              "next": "/confirm/{c}", "current": "confirm"},
+    "confirmed": {"headline": "Wheelchair information confirmed", "button": "Go to wheelchair passport",
+                  "next": "/passport/{c}", "current": "passport"},
+}
+
+
+def step_bar(current, chair_id=None, fast=""):
+    """Four steps: earlier ones done (links when a chair is known), `current` gold, later ones outline."""
+    at = [k for k, _ in FLOW].index(current)
+    bar = []
+    for i, (key, name) in enumerate(FLOW):
+        state = "done" if i < at else "current" if i == at else "later"
+        href = None
+        if state == "done" and (key == "choose" or chair_id):
+            href = FLOW_PATHS[key].format(c=chair_id) + fast
+        bar.append({"num": i + 1, "name": name, "state": state, "href": href})
+    return bar
+
+
+def step_is_done(step, chair):
+    """False -> the page where the work still is (a path), else None."""
+    if step == "built" and "label" not in chair.get("stages", []):
+        return f"/build/{chair['chair_id']}"
+    if step == "confirmed" and any(l["status"] == "pending" for l in chair["labels"]):
+        return f"/confirm/{chair['chair_id']}"
+    return None
+
+
+def step_summary(step, chair, record):
+    """The summary line from the record and chair files; a missing value leaves its part out."""
+    if step == "chosen":
+        return chair_name(chair) or "Model not read yet"
+    if step == "built":
+        parts = []
+        if record.get("steps") is not None:
+            parts.append(f"{len(record['steps'])} steps")
+        q = record.get("quotes") or {}
+        if q.get("total") is not None and q.get("verified") is not None:
+            parts.append(f"{q['verified']} of {q['total']} quotes verified")
+        found = {l["part_id"] for l in chair["labels"] if not l.get("zone") and l.get("photo")}
+        parts.append(f"{len(found)} parts found on the photos")
+        return " · ".join(parts)
+    statuses = [l["status"] for l in chair["labels"]]
+    return f"{statuses.count('confirmed')} labels confirmed · {statuses.count('rejected')} hidden"
