@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ v.name }} · TagAlong</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --teal: #044B52; --deep: #03363b; --card: #0a5a61; --jade: #005D63; --jade-bright: #00877f;
+          --gold: #C3AC86; --soft: #cfe0df; --warn: #f2b84b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--deep); color: #fff; font: 17px/1.45 "Atkinson Hyperlegible", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 48px; }
+  .concept { position: fixed; top: 10px; right: 12px; background: var(--gold); color: var(--teal); font-weight: 700;
+             font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: 999px; }
+  .card { background: var(--teal); border: 1px solid rgba(195,172,134,.35); border-radius: 16px; padding: 16px; }
+  .eyebrow { margin: 0; color: var(--gold); font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; }
+  h1 { font-size: 1.5rem; margin: .2em 0 .3em; }
+  h2 { font-size: 1.15rem; margin: 1.4em 0 .4em; color: var(--gold); text-transform: uppercase; letter-spacing: .06em; }
+  h3 { color: var(--soft); text-transform: uppercase; font-size: .8rem; letter-spacing: .1em; margin: 1em 0 .3em; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .tag { background: var(--gold); color: var(--teal); font-weight: 700; padding: 6px 10px; border-radius: 8px; white-space: nowrap; }
+  .pending { color: var(--warn); font-weight: 700; }
+  .photos { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; margin: 12px 0; }
+  .photos figure { margin: 0; }
+  .photos img { width: 100%; height: auto; display: block; border-radius: 12px; }
+  .photos figcaption { font-size: .8rem; color: var(--soft); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 4px; border-bottom: 1px solid rgba(255,255,255,.12); }
+  th { color: var(--soft); font-weight: 400; width: 38%; }
+  .pg { color: var(--gold); font-size: .85rem; white-space: nowrap; }
+  ol, ul.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .step { display: flex; gap: 12px; background: var(--card); border-radius: 12px; padding: 12px; }
+  .num { flex: none; width: 32px; height: 32px; border-radius: 8px; background: #fff; color: var(--teal);
+         font-weight: 700; display: grid; place-items: center; }
+  .dot { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--gold);
+         color: var(--teal); border: 2px solid #fff; font-weight: 700; font-size: .8rem; margin-right: 4px; vertical-align: middle; }
+  .action { margin: 0 0 6px; font-weight: 700; }
+  .meta { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { font-size: .72rem; padding: 2px 8px; border-radius: 999px; }
+  .chip-ai { border: 1px solid var(--soft); color: var(--soft); }
+  .chip-warn { background: var(--warn); color: #3a2a00; }
+  details summary { cursor: pointer; color: var(--gold); font-weight: 700; padding: 8px 0; }
+  .safety { margin-top: 16px; border-left: 4px solid var(--gold); padding: 4px 0 4px 12px; }
+  .safety ul { padding-left: 18px; margin: 4px 0; }
+  .small { color: var(--soft); font-size: .85rem; }
+  @media (max-width: 480px) {
+    .photos { grid-template-columns: 1fr; }
+    th, td { display: block; border: 0; padding: 2px 0; width: auto; }
+    tr { display: block; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+  }
+</style>
+</head>
+<body>
+<span class="concept">Concept</span>
+<main>
+<section class="card">
+  <div class="head">
+    <div>
+      <p class="eyebrow">Wheelchair passport</p>
+      <h1>{{ v.name }}</h1>
+    </div>
+    <span class="tag">{{ device.tag_id }}</span>
+  </div>
+  <p class="pending">Labels not yet confirmed by the owner.</p>
+
+  <div class="photos">
+    {% for p in photos %}
+    <figure><img src="{{ p.src }}" alt="{{ p.name }} with numbered labels"><figcaption>{{ p.name.rsplit('.', 1)[0]|replace('_', ' ')|capitalize }}</figcaption></figure>
+    {% endfor %}
+  </div>
+
+  <h2>Key facts</h2>
+  <table>
+    <tr><th>SSR code</th><td>{{ v.ssr_text }}</td><td></td></tr>
+    {% for key in fact_keys %}{% set row = v.facts[key] %}
+    <tr>
+      <th>{{ row.label }}</th>
+      <td>{{ row.text }}{% for c in row.cites if not c.verified %} <span class="chip chip-warn">Quote not found on page</span>{% endfor %}</td>
+      <td class="pg">{% for c in row.cites if c.page %}p.&nbsp;{{ c.page }} {% endfor %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h2>Must do</h2>
+  {% for title, group in v.must_groups %}
+  <h3>{{ title }}</h3>
+  <ol>
+    {% for s in group %}
+    <li class="step"><span class="num">{{ s.num }}</span><div>
+      <p class="action">{% if s.label_n %}<span class="dot">{{ s.label_n }}</span>{% endif %}{{ s.action }}</p>
+      <p class="meta"><span class="chip chip-ai">AI-extracted · page verified</span><span class="pg">p.&nbsp;{{ s.source.page }}</span></p>
+    </div></li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p>No verified must-do steps.</p>
+  {% endfor %}
+
+  {% if v.more %}
+  <details>
+    <summary>More from the manual ({{ v.more|length }})</summary>
+    <ul class="steps">
+      {% for s in v.more %}
+      <li class="step"><div>
+        <p class="action">{% if s.label_n %}<span class="dot">{{ s.label_n }}</span>{% endif %}{{ s.action }}</p>
+        <p class="meta">
+          {% if s.verified %}<span class="chip chip-ai">AI-extracted · page verified</span>{% else %}<span class="chip chip-warn">Quote not found on page</span>{% endif %}
+          <span class="pg">p.&nbsp;{{ s.source.page }}</span>
+        </p>
+      </div></li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+
+  {% if record.safety_lines %}
+  <div class="safety">
+    <h3>Every power chair</h3>
+    <ul>{% for line in record.safety_lines.lines %}<li>{{ line }}</li>{% endfor %}</ul>
+    <p class="small">Source: {{ record.safety_lines.source }}</p>
+  </div>
+  {% endif %}
+
+  {% if sample_photos %}<p class="small"><em>Sample photos. In real use the owner takes them.</em></p>{% endif %}
+  <p class="small">Steps and facts copied from the {{ record.make }} {{ record.model }} manual ({{ record.manual.file }}). Page numbers are PDF pages.</p>
+</section>
+</main>
+</body>
+</html>
