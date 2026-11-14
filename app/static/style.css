@@ -37,7 +37,7 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 
 /* Top bar: airport-sign strip */
 .topbar {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
   padding: 12px 16px; padding-right: 110px;
   background: var(--teal); border-bottom: 3px solid var(--gold);
 }
@@ -166,6 +166,15 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 .chip-ai { border: 1px solid var(--ink-soft); color: var(--ink-soft); }
 .chip-owner { background: var(--jade-bright); color: #fff; }
 .chip-warn { background: var(--warn); color: #3a2a00; }
+.chip-card { background: var(--gold); color: var(--teal); font-weight: 700; }
+
+/* /passport: the printed card first, scaled to fit (card_preview.js), then the record it comes from */
+.card-preview { margin: 12px 0 0; }
+.card-preview-frame { display: block; overflow: hidden; border-radius: 8px; }
+.card-preview-scale { transform-origin: top left; width: max-content; }
+.card-preview-scale .sheet { margin: 0; }
+.card-preview-line { margin: 10px 0; color: var(--ink-soft); font-weight: 700; }
+.record-line { color: var(--ink-soft); margin: 16px 0 0; }
 .page-link { font-size: 0.85rem; margin-right: 6px; }
 .more { margin-top: 12px; }
 .more summary { cursor: pointer; color: var(--gold); font-weight: 700; padding: 8px 0; }
@@ -250,8 +259,19 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 /* Crew */
 .nav-link { margin-left: auto; color: var(--ink); font-weight: 700; font-size: 0.85rem; text-decoration: none;
   border: 1px solid var(--gold); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-.crew-link { display: flex; flex-direction: column; margin-top: 16px; text-decoration: none; color: var(--ink); }
-.crew-link span { color: var(--ink-soft); font-size: 0.9rem; }
+
+/* Home: the problem line and the two doors (side by side, stacked on a phone) */
+.intro h1 { font-size: 2rem; }
+.doors { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; margin: 16px 0 8px; }
+.door { display: flex; flex-direction: column; text-decoration: none; color: var(--ink); border-width: 2px; }
+.door b { font-size: 1.15rem; color: var(--gold); }
+.door span { color: var(--ink-soft); font-size: 0.95rem; }
+
+/* Top bar: whose view this page is */
+.role-chip { border: 1px solid var(--ink-soft); color: var(--ink); font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 999px; white-space: nowrap; align-self: center; }
+.role-chip.role-crew { background: var(--gold); color: var(--teal); border-color: var(--gold); }
+.role-chip.role-checkin { background: var(--jade-bright); border-color: var(--jade-bright); }
 .crew-how { margin: 12px 0; }
 .crew-how h2 { margin-top: 0; }
 /* /confirm: a wide page with big photos; every ring is a button. Tap cycles grey (not checked) ->
@@ -342,6 +362,8 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 
 @media (max-width: 480px) {
   h1 { font-size: 1.35rem; }
+  .intro h1 { font-size: 1.6rem; }
+  .doors { grid-template-columns: 1fr; }
   .photos { grid-template-columns: 1fr; }
   .facts th { width: auto; }
   .facts th, .facts td { display: block; padding: 2px 0; border: 0; }
@@ -350,7 +372,7 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 }
 
 /* ---------- Printed card: A5 landscape (210 × 148 mm) ---------- */
-.print-toolbar { display: flex; justify-content: space-between; gap: 8px; padding: 12px 16px; padding-right: 110px; background: var(--teal); }
+.print-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; padding-right: 110px; background: var(--teal); }
 .print-page .wrap { max-width: none; overflow-x: auto; }
 .sheet {
   width: 210mm; height: 148mm; margin: 0 auto; padding: 7mm 8mm;

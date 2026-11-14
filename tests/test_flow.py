@@ -114,7 +114,7 @@ def test_step_bar():
     assert 'class="step-done"' in page and '<a href="/build/chair-a">' in page   # done steps are links
     assert 'class="step-current" aria-current="step"' in page
     assert 'href="/passport/chair-a"' not in page.split('class="stepbar"')[1].split("</nav>")[0]  # later: no link
-    for url in ("/", "/build/chair-a", "/passport/chair-a", "/uses/chair-a/checkin"):
+    for url in ("/", "/build/chair-a", "/passport/chair-a", "/uses/chair-a/return"):
         assert 'class="stepbar"' in client.get(url).text
-    for url in ("/passport/chair-a/print", "/manual/whill-model-c2/61"):
+    for url in ("/passport/chair-a/print", "/manual/whill-model-c2/61", "/uses/chair-a/checkin", "/crew"):
         assert 'class="stepbar"' not in client.get(url).text

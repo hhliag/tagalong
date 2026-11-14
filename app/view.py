@@ -182,7 +182,7 @@ def passport(chair, record, include_pending=False):
     ssr = rules.ssr_codes(kind, rules.battery_removed(chair.get("removed_parts")))
     wh = rules.wh_display(facts)
 
-    return {
+    v = {
         "name": f"{record['make']} {record['model']}",
         "parts": parts,
         "confirmed": confirmed,
@@ -204,6 +204,25 @@ def passport(chair, record, include_pending=False):
         "facts": fact_rows(facts, wh),
         "return_checks": [f"{parts[pid]['name']['value']} in place" for pid in dict.fromkeys(l["part_id"] for l in confirmed)]
         + [s["action"] for s in steps if s["phase"] == "at_arrival"],
+    }
+    v["card"] = card(v)
+    return v
+
+
+def card(v):
+    """What the printed A5 card shows. The print page draws from this, and /passport tags the same items
+    "On the card", so the two cannot drift apart."""
+    h = v["handling"] or {}
+    return {
+        "photos": v["photos"][:2],
+        "hold": h.get("hold", [])[:3],
+        "no_hold": h.get("no_hold", [])[:3],
+        "steps": v["must"],
+        "facts": [("Weight", v["facts"]["weight"]["text"]), ("Battery", v["facts"]["battery_type"]["text"]),
+                  ("Watt-hours", v["wh"]["text"]), ("Power off", v["facts"]["power_off"]["text"])],
+        "photo_files": {p["file"] for p in v["photos"][:2]},
+        "zone_ids": {z["id"] for z in h.get("hold", [])[:3] + h.get("no_hold", [])[:3]},
+        "step_ids": {s["id"] for s in v["must"]},
     }
 
 
@@ -245,6 +264,9 @@ def fact_rows(facts, wh):
 
 
 # ---------- page flow: step bar and step-done pages ----------
+
+# The role chip in the top bar: whose view this page is. The step bar shows on owner pages only.
+ROLES = {"owner": "Owner view", "crew": "Crew view", "checkin": "Check-in view"}
 
 FLOW = [("choose", "Choose chair"), ("build", "Build passport"), ("confirm", "Confirm"), ("passport", "Passport")]
 FLOW_PATHS = {"choose": "/", "build": "/build/{c}", "confirm": "/confirm/{c}", "passport": "/passport/{c}"}

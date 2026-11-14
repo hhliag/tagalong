@@ -74,3 +74,12 @@ Where DESIGN.md was unclear, the simplest option was chosen and written here. Ch
 47. **MODE** defaults to `saved` when `K_SERVICE` is set, else `live`; `MODE` in the environment wins. Live mode is not built, so nothing reads it yet: behaviour is the same either way.
 48. **Ignore files.** `.gcloudignore` (upload) and `.dockerignore` (image) both leave out `.env`, `.git`, `out/`, `saved/`, `data/`, `.venv/`, caches and `16_PIPELINE.md` (the owner's private prompt doc). Patterns are anchored (`/out/`) so `deploy_data/out/` is kept. The Dockerfile fails with a message when `deploy_data/` was not prepared.
 49. **requirements.txt** lists every third-party package that `app/` and `pipeline/` import. `pydantic` was imported directly but only came in through FastAPI; it is now pinned (2.14.3, the version in use). `pytest` stays in, so the image can run the tests.
+
+## Home, roles and the passport layout
+
+50. **"maker's manual" in the new home text** is written as "manufacturer's manual", following the earlier request to use that phrase everywhere.
+51. **Home page.** The headline is the page's `h1`; "Pick a chair" becomes an `h2` with `id="pick"`, the target of "I am the passenger". The doors sit between the intro and the picker.
+52. **Role chips.** `/manual/...` gets no chip: owners and crew both open it from their own pages. `/print` has no top bar, so its chip sits in the toolbar (hidden when printed). `/uses/*/checkin` loses the step bar (Check-in view); `/uses/*/onboard` and `/return` keep it. The top bar now wraps on a phone, because the extra chip did not fit at 390 px.
+53. **Card preview** is the real card markup (`_card.html`, shared with `/print`), scaled down by a small script (`card_preview.js`). Without JavaScript it shows at full size, cut off at the right edge. It is hidden from screen readers, since the full record below holds the same content.
+54. **"On the card" tags** come from `v.card` (`view.card`), which the print page also draws from: the first 2 photos, the first 3 hold and 3 no-hold zones, and every must-do step. Key facts are not listed in the full record on `/passport`, so no fact carries a tag there; they show in the card preview and on the Check-in page.
+55. **Other uses strip.** The Crew view and Check-in tiles lose their "Concept" chip; only On board and Return check keep it.

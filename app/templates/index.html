@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Pick a chair</h1>
-<p class="lead">The app reads the model plate, finds the manufacturer's manual and builds the chair's passport.</p>
+<section class="intro">
+  <h1>Her wheelchair flies without her.</h1>
+  <p class="lead">Loaders have never seen her chair before. TagAlong turns the manufacturer's manual into a
+    passport for her exact chair, so they know how to handle it.</p>
+</section>
+
+<div class="doors">
+  <a class="card door" href="#pick"><b>I am the passenger</b><span>Make the passport for my chair</span></a>
+  <a class="card door" href="/crew"><b>I am ramp crew</b><span>Look up how to handle a chair</span></a>
+</div>
+
+<h2 id="pick">Pick a chair</h2>
+<p class="lead">Demo: choose a sample chair. In real use, she takes 4 photos of her own.</p>
 <div class="picker">
   {% for c in cards %}
   <a class="card pick-card" href="{{ flow_link(request, c.chair.chair_id, 'chosen') }}">
@@ -13,5 +24,4 @@
   </a>
   {% endfor %}
 </div>
-<a class="card crew-link" href="/crew"><b>Crew: look up a chair</b><span>Scan the QR on the chair's card, or type its tag ID</span></a>
 {% endblock %}

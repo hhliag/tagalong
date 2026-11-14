@@ -12,20 +12,30 @@
     <span class="tag-id">{{ chair.tag_id }}</span>
   </div>
 
+  <div class="card-preview">
+    <a class="card-preview-frame" href="/passport/{{ chair.chair_id }}/print" aria-label="The printed card" tabindex="-1">
+      <div class="card-preview-scale" aria-hidden="true">{% include "_card.html" %}</div>
+    </a>
+    <p class="card-preview-line">This card travels on her chair</p>
+    <a class="btn btn-gold" href="/passport/{{ chair.chair_id }}/print">Open the card</a>
+  </div>
+  <p class="record-line">The card is one part of her chair's record. The full record is below.</p>
+
+  <h2 class="record-title">The full record</h2>
   <div class="photos">
-    {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts) }}{% endfor %}
+    {% for p in v.photos %}{{ photo(chair.chair_id, p, v.parts, on_card=p.file in v.card.photo_files) }}{% endfor %}
   </div>
   {{ label_legend(v.legend) }}
   {% if v.hidden_count %}
   <p class="hidden-line">{{ v.hidden_count }} label{{ 's' if v.hidden_count != 1 }} hidden (not confirmed by the owner).</p>
   {% endif %}
 
-  {{ handling_box(record.record_id, v.handling) }}
+  {{ handling_box(record.record_id, v.handling, card=v.card) }}
 
   <h2>Must do</h2>
   {% for title, group in v.must_groups %}
   <h3 class="phase">{{ title }}</h3>
-  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s, chair_id=chair.chair_id) }}{% endfor %}</ol>
+  <ol class="steps">{% for s in group %}{{ step_item(record.record_id, s, chair_id=chair.chair_id, on_card=s.id in v.card.step_ids) }}{% endfor %}</ol>
   {% else %}
   <p>No verified must-do steps.</p>
   {% endfor %}
@@ -48,12 +58,12 @@
   {{ fixture_note(record) }}
 </section>
 
-<h2 class="strip-title">Same passport, other uses</h2>
+<h2 class="strip-title">The same record also gives</h2>
 <div class="strip">
-  <a class="card tile" href="/crew/{{ chair.tag_id }}"><span class="concept-mini">Concept</span><b>Crew view</b><span>What the QR on the card opens</span></a>
-  <a class="card tile" href="/passport/{{ chair.chair_id }}/print"><span class="concept-mini">Concept</span><b>Printed card</b><span>A5 card for the chair</span></a>
+  <a class="card tile" href="/crew/{{ chair.tag_id }}"><b>Crew view</b><span>What the QR on the card opens</span></a>
   <a class="card tile" href="/uses/{{ chair.chair_id }}/onboard"><span class="concept-mini">Concept</span><b>On board</b><span>Phone notice to the owner</span></a>
-  <a class="card tile" href="/uses/{{ chair.chair_id }}/checkin"><span class="concept-mini">Concept</span><b>Check-in</b><span>Battery facts and SSR code</span></a>
+  <a class="card tile" href="/uses/{{ chair.chair_id }}/checkin"><b>Check-in</b><span>Battery facts and SSR code</span></a>
   <a class="card tile" href="/uses/{{ chair.chair_id }}/return"><span class="concept-mini">Concept</span><b>Return check</b><span>Owner's checklist at arrival</span></a>
 </div>
 {% endblock %}
+{% block scripts %}<script src="/static/card_preview.js"></script>{% endblock %}

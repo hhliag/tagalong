@@ -53,9 +53,12 @@ def _record(record_id):
     return record
 
 
-def _page(request, name, flow=None, **ctx):
-    """flow: the step this page is in (view.FLOW key); draws the step bar."""
-    if flow:
+def _page(request, name, flow=None, role=None, **ctx):
+    """flow: the step this page is in (view.FLOW key); draws the step bar on owner pages.
+    role: view.ROLES key, shown as a chip in the top bar."""
+    ctx["role"] = role
+    ctx["role_name"] = view.ROLES.get(role)
+    if flow and role == "owner":
         chair = ctx.get("chair")
         ctx["steps"] = view.step_bar(flow, chair["chair_id"] if chair else None, fast_q(request))
     return templates.TemplateResponse(request, name, ctx)
@@ -77,12 +80,12 @@ def _passport_ctx(chair_id):
 def index(request: Request):
     chairs = [store.chair(cid) for cid in store.chair_ids()]
     cards = [{"chair": c, "name": view.chair_name(c)} for c in chairs]
-    return _page(request, "index.html", flow="choose", cards=cards)
+    return _page(request, "index.html", flow="choose", role="owner", cards=cards)
 
 
 @app.get("/build/{chair_id}")
 def build(request: Request, chair_id: str):
-    return _page(request, "build.html", flow="build", chair=_chair(chair_id))
+    return _page(request, "build.html", flow="build", role="owner", chair=_chair(chair_id))
 
 
 @app.get("/confirm/{chair_id}")
@@ -94,7 +97,7 @@ def confirm(request: Request, chair_id: str):
     files = CONFIRM_VIEWS + sorted({l["photo"] for l in chair["labels"] if l["photo"]} - set(CONFIRM_VIEWS))
     zones = {z["id"]: z for z in record.get("handling") or []}
     return _page(
-        request, "confirm.html", flow="confirm", chair=chair, part_labels=part_labels, zone_labels=zone_labels, zones=zones,
+        request, "confirm.html", flow="confirm", role="owner", chair=chair, part_labels=part_labels, zone_labels=zone_labels, zones=zones,
         parts={p["id"]: p for p in record["parts"]},
         photos=[view.photo_entry(f, part_labels, zone_labels) for f in files],
     )
@@ -102,7 +105,8 @@ def confirm(request: Request, chair_id: str):
 
 @app.get("/passport/{chair_id}")
 def passport(request: Request, chair_id: str):
-    return _page(request, "passport.html", flow="passport", **_passport_ctx(chair_id))
+    ctx = _passport_ctx(chair_id)
+    return _page(request, "passport.html", flow="passport", role="owner", qr=crew_qr(request, ctx["chair"]), **ctx)
 
 
 @app.get("/done/{chair_id}/{step}")
@@ -121,7 +125,7 @@ def step_done(request: Request, chair_id: str, step: str):
         return RedirectResponse(next_url + fast_q(request), status_code=303)
     record = _record(chair["record_id"])
     qr = crew_qr(request, chair) if step == "confirmed" else None
-    return _page(request, "done.html", flow=info["current"], chair=chair, info=info, next_url=next_url,
+    return _page(request, "done.html", flow=info["current"], role="owner", chair=chair, info=info, next_url=next_url,
                  summary=view.step_summary(step, chair, record), qr=qr)
 
 
@@ -138,7 +142,7 @@ def crew_qr(request, chair):
 def passport_print(request: Request, chair_id: str):
     ctx = _passport_ctx(chair_id)
     qr = crew_qr(request, ctx["chair"])
-    return _page(request, "print.html", qr=qr, **ctx)
+    return _page(request, "print.html", role="crew", qr=qr, **ctx)
 
 
 @app.get("/crew")
@@ -148,22 +152,23 @@ def crew_search(request: Request, tag: str | None = None):
         chair = store.find_chair_by_tag(tag)
         if chair:
             return RedirectResponse(f"/crew/{chair['tag_id']}", status_code=303)
-    return _page(request, "crew_search.html", tag=tag, not_found=bool(tag))
+    return _page(request, "crew_search.html", role="crew", tag=tag, not_found=bool(tag))
 
 
 @app.get("/crew/{tag_id}")
 def crew_view(request: Request, tag_id: str):
     chair = store.find_chair_by_tag(tag_id)
     if chair is None:
-        return _page(request, "crew_search.html", tag=tag_id, not_found=True)
-    return _page(request, "crew.html", **_passport_ctx(chair["chair_id"]))
+        return _page(request, "crew_search.html", role="crew", tag=tag_id, not_found=True)
+    return _page(request, "crew.html", role="crew", **_passport_ctx(chair["chair_id"]))
 
 
 @app.get("/uses/{chair_id}/{use}")
 def uses(request: Request, chair_id: str, use: str):
     if use not in USES:
         raise HTTPException(404, "Unknown use")
-    return _page(request, f"uses_{use}.html", flow="passport", use_title=USES[use], **_passport_ctx(chair_id))
+    role = "checkin" if use == "checkin" else "owner"
+    return _page(request, f"uses_{use}.html", flow="passport", role=role, use_title=USES[use], **_passport_ctx(chair_id))
 
 
 @app.get("/manual/{record_id}/{page}")

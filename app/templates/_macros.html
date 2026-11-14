@@ -1,4 +1,4 @@
-{% macro photo(chair_id, p, parts, show_status=false) -%}
+{% macro photo(chair_id, p, parts, show_status=false, on_card=false) -%}
 <figure class="photo">
   <div class="photo-frame">
     <img src="/photo/{{ chair_id }}/{{ p.file }}" alt="{{ p.file }} view of the chair">
@@ -19,7 +19,7 @@
           title="{{ l.code }} · {{ parts[l.part_id].name.value }}"{% if show_status %} {{ tap(l) }}{% endif %}><span class="pin-line"></span><span class="pin-badge">{{ l.code }}</span></span>
     {% endfor %}
   </div>
-  <figcaption>{{ p.file.rsplit('.', 1)[0]|capitalize }} view</figcaption>
+  <figcaption>{{ p.file.rsplit('.', 1)[0]|capitalize }} view{% if on_card %} {{ card_tag() }}{% endif %}</figcaption>
   {% if p.zones %}{{ legend() }}{% endif %}
 </figure>
 {%- endmacro %}
@@ -28,6 +28,9 @@
 {% macro tap(l) -%}
 data-id="{{ l.id }}" role="button" tabindex="0" aria-label="{{ l.status }}"
 {%- endmacro %}
+
+{# /passport: marks an item that is also on the printed card (decided from v.card). #}
+{% macro card_tag() -%}<span class="chip chip-card">On the card</span>{%- endmacro %}
 
 {% macro legend() -%}
 <p class="zone-legend"><span class="zbadge hold"></span> Lift here <span class="zbadge no_hold"></span> Do not hold</p>
@@ -53,21 +56,21 @@ data-id="{{ l.id }}" role="button" tabindex="0" aria-label="{{ l.status }}"
 {% endif %}
 {%- endmacro %}
 
-{% macro handling_box(record_id, h, limit=none) -%}
+{% macro handling_box(record_id, h, limit=none, card=none) -%}
 {% if h %}
 <section class="handling">
   <h2>How to hold this chair</h2>
   {% if h.hold %}
   <h3 class="hold-title"><span class="zbadge hold"></span> Lift here</h3>
   <ul class="zone-list hold">
-    {% for z in (h.hold[:limit] if limit else h.hold) %}{{ zone_item(record_id, z) }}{% endfor %}
+    {% for z in (h.hold[:limit] if limit else h.hold) %}{{ zone_item(record_id, z, card and z.id in card.zone_ids) }}{% endfor %}
   </ul>
   {% endif %}
   {% if h.no_lift_points %}<p class="no-lift">The manual gives no lifting points. Ask the owner.</p>{% endif %}
   {% if h.no_hold %}
   <h3 class="no-hold-title"><span class="zbadge no_hold"></span> Do not lift by</h3>
   <ul class="zone-list no_hold">
-    {% for z in (h.no_hold[:limit] if limit else h.no_hold) %}{{ zone_item(record_id, z) }}{% endfor %}
+    {% for z in (h.no_hold[:limit] if limit else h.no_hold) %}{{ zone_item(record_id, z, card and z.id in card.zone_ids) }}{% endfor %}
   </ul>
   {% endif %}
   {% if h.hidden_count %}
@@ -77,9 +80,9 @@ data-id="{{ l.id }}" role="button" tabindex="0" aria-label="{{ l.status }}"
 {% endif %}
 {%- endmacro %}
 
-{% macro zone_item(record_id, z) -%}
+{% macro zone_item(record_id, z, on_card=false) -%}
 <li>
-  <b>{{ z.part_name }}</b> · {{ z.reason }}
+  <b>{{ z.part_name }}</b> · {{ z.reason }}{% if on_card %} {{ card_tag() }}{% endif %}
   <span class="step-meta"><span class="chip chip-ai">AI-extracted · page verified</span>{% if z.owner_confirmed %}<span class="chip chip-owner">Owner-confirmed</span>{% endif %}
   <a class="page-link" href="/manual/{{ record_id }}/{{ z.source.page }}?step={{ z.id }}">p.&nbsp;{{ z.source.page }}</a></span>
 </li>
@@ -94,12 +97,12 @@ data-id="{{ l.id }}" role="button" tabindex="0" aria-label="{{ l.status }}"
 {% if step.owner_confirmed %}<span class="chip chip-owner">Owner-confirmed</span>{% endif %}
 {%- endmacro %}
 
-{% macro step_item(record_id, s, numbered=true, chair_id=none) -%}
+{% macro step_item(record_id, s, numbered=true, chair_id=none, on_card=false) -%}
 <li class="step">
   {% if numbered %}<span class="step-num">{{ s.num }}</span>{% endif %}
   <div class="step-body">
     <p class="step-action">{{ s.action_display }}</p>
-    <p class="step-meta">{{ part_chip(s) }} {{ trust(s) }} {{ page_links(record_id, [s.source], s.id) }}</p>
+    <p class="step-meta">{{ part_chip(s) }} {{ trust(s) }}{% if on_card %} {{ card_tag() }}{% endif %} {{ page_links(record_id, [s.source], s.id) }}</p>
     {{ step_figure(chair_id, record_id, s) }}
   </div>
 </li>
