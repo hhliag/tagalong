@@ -42,3 +42,11 @@ Where DESIGN.md was unclear, the simplest option was chosen and noted here. Chan
 33. **The dots follow the "~3% of the short side" rule** (23 px on a 1024 × 768 photo). On a 390 px phone screen that is a small dot, about 7 px in radius. Make it bigger if it is hard to see.
 34. **New chair record fields** come from `meta.yaml` when present: `tag_id` (else made from the chair id), `battery_original`, `removed_parts` (else null = unknown).
 35. **Old ✓/✗ decisions are cleared.** The label stage deletes the web app's runtime state for that chair, since those decisions were about the old labels.
+
+## First real run: Kovital KV-E100 (14 Nov 2026)
+
+36. **Model name.** The manual never says "KV-E100" or "Kovital"; it calls the chair SWWP12504 (N3502). `meta.yaml` uses make Kovital, model KV-E100 (the shop placard and photo names), so the pages stage warns that the model is not in the first pages. The LLM put SWWP12504(N3502) in `aliases`.
+37. **Chinese manuals.** The page keywords now include Chinese terms (Traditional and Simplified), including this manual's word for the freewheel lever (制動杆, engaged 嚙合 / disengaged 脫開), plus 推動 (push) and 運送 (transport). Scoring runs on normalised text. The verifier drops whitespace next to CJK characters, because PDF line breaks split Chinese sentences.
+38. **Language on the card.** Quotes and actions stay in the manual's language (Chinese here): translating would be generating, against the core rule. Values (facts, part names) are short English. For English-speaking judges, an English action would need a translation step, marked as such. Not built.
+39. **Gemini on Vertex AI.** With `GOOGLE_GENAI_USE_VERTEXAI=True`, the client uses `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` and the gcloud login instead of `GEMINI_API_KEY`.
+40. **Timeout.** The live extract call took 39 s against the 40 s default `STAGE_TIMEOUT`. Set `STAGE_TIMEOUT=90` in `.env` for the pipeline.
