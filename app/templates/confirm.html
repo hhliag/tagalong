@@ -1,45 +1,41 @@
 {% extends "base.html" %}
 {% from "_macros.html" import photo, sample_note %}
+{% block body_class %}confirm-page{% endblock %}
 {% block body_attrs %}data-chair="{{ chair.chair_id }}"{% endblock %}
 {% block crumbs %}<span class="crumb">Confirm</span>{% endblock %}
 {% block content %}
 <h1>Is each label on the right part?</h1>
-<p class="lead">Each part has a letter and is ringed on every photo where it shows. Tap ✓ if that ring sits on the part, ✗ to hide it.</p>
+<p class="lead">Tap a ring to check it: <span class="key pending">grey</span> not checked,
+  tap once <span class="key confirmed">green</span> right, tap again <span class="key rejected">red</span> wrong,
+  tap again for grey. Drag a ring to move it onto the part.</p>
+
+<ul class="confirm-legend">
+  {% for l in part_labels|sort(attribute='n')|unique(attribute='n') %}{% set part = parts[l.part_id] %}
+  <li><b>{{ letter(l.n) }} · {{ part.name.value }}</b>{% if part.where %} <span>{{ part.where }}</span>{% endif %}</li>
+  {% endfor %}
+  {% for l in zone_labels|unique(attribute='zone_id') %}{% set z = zones.get(l.zone_id) %}
+  <li><span class="zkey {{ l.zone }}">{{ 'Lift' if l.zone == 'hold' else 'No' }}</span>
+    <b>{{ 'Lift here' if l.zone == 'hold' else 'Do not hold' }}: {{ parts[l.part_id].name.value }}</b>{% if z %} <span>{{ z.reason }} · p. {{ z.source.page }}</span>{% endif %}</li>
+  {% endfor %}
+</ul>
+
+<button id="check-all" class="btn btn-jade" type="button">✓ Check all (make every ring green)</button>
 
 <div class="photos">
   {% for p in photos %}{{ photo(chair.chair_id, p, parts, show_status=true) }}{% endfor %}
 </div>
 
-<ul class="decide-list">
-  {% for l in part_labels %}
-  <li class="decide {{ l.status }}" id="row-{{ l.id }}">
-    <span class="code-badge {{ l.status }}">{{ letter(l.n) }}</span>
-    <div class="decide-text">
-      <b>{{ letter(l.n) }} · {{ parts[l.part_id].name.value }}</b>
-      <span>{{ parts[l.part_id].where }} · {{ l.photo.rsplit('.', 1)[0] }} photo</span>
-    </div>
-    <button class="btn-icon yes" data-id="{{ l.id }}" data-status="confirmed" aria-label="Confirm label {{ l.n }} on the {{ l.photo }}">✓</button>
-    <button class="btn-icon no" data-id="{{ l.id }}" data-status="rejected" aria-label="Hide label {{ l.n }} on the {{ l.photo }}">✗</button>
-  </li>
+{% set unplaced = zone_labels|rejectattr('photo')|list %}
+{% if unplaced %}
+<h2 class="confirm-zones-title">Not visible in the photos</h2>
+<div class="unplaced">
+  {% for l in unplaced %}{% set z = zones.get(l.zone_id) %}
+  <button class="pin-chip {{ l.status }}" id="dot-{{ l.id }}" data-id="{{ l.id }}" aria-label="{{ l.status }}">
+    <span class="zkey {{ l.zone }}">{{ 'Lift' if l.zone == 'hold' else 'No' }}</span>
+    {{ parts[l.part_id].name.value }}{% if z %} · p. {{ z.source.page }}{% endif %}
+  </button>
   {% endfor %}
-</ul>
-
-{% if zone_labels %}
-<h2 class="confirm-zones-title">How to hold this chair</h2>
-<p class="lead">From the manual. Tap ✓ to keep a zone on the passport, ✗ to hide it.</p>
-<ul class="decide-list">
-  {% for l in zone_labels %}{% set z = zones.get(l.zone_id) %}
-  <li class="decide {{ l.status }}" id="row-{{ l.id }}">
-    <span class="zbadge {{ l.zone }} {{ l.status }}"></span>
-    <div class="decide-text">
-      <b>{{ 'Lift here' if l.zone == 'hold' else 'Do not hold' }}: {{ parts[l.part_id].name.value }}</b>
-      <span>{% if z %}{{ z.reason }} · p. {{ z.source.page }} · {% endif %}{{ (l.photo.rsplit('.', 1)[0] ~ ' photo') if l.photo else 'not visible in the photos' }}</span>
-    </div>
-    <button class="btn-icon yes" data-id="{{ l.id }}" data-status="confirmed" aria-label="Keep zone">✓</button>
-    <button class="btn-icon no" data-id="{{ l.id }}" data-status="rejected" aria-label="Hide zone">✗</button>
-  </li>
-  {% endfor %}
-</ul>
+</div>
 {% endif %}
 
 <a id="done" class="btn btn-jade btn-big{% if chair.labels|selectattr('status', 'equalto', 'pending')|list %} disabled{% endif %}"

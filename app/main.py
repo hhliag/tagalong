@@ -215,3 +215,39 @@ def api_label_decision(chair_id: str, label_id: int, body: LabelDecision):
     store.save_chair(chair)
     return {"id": label_id, "status": body.status,
             "pending": sum(l["status"] == "pending" for l in chair["labels"])}
+
+
+class LabelMove(BaseModel):
+    x: float
+    y: float
+
+
+@app.post("/api/labels/{chair_id}/{label_id}/move")
+def api_label_move(chair_id: str, label_id: int, body: LabelMove):
+    """The owner dragged a ring on /confirm: new centre in 0-1 fractions. A zone box moves with it."""
+    chair = _chair(chair_id)
+    label = next((l for l in chair["labels"] if l["id"] == label_id), None)
+    if label is None or not label.get("photo"):
+        raise HTTPException(404, "Unknown label")
+    x, y = min(max(body.x, 0.0), 1.0), min(max(body.y, 0.0), 1.0)
+    if label.get("box"):
+        dx, dy = x - label["x"], y - label["y"]
+        b = label["box"]
+        label["box"] = [b[0] + dx, b[1] + dy, b[2] + dx, b[3] + dy]
+    label["x"], label["y"] = x, y
+    label["moved"] = True
+    store.save_chair(chair)
+    return {"id": label_id, "x": x, "y": y, "box": label.get("box")}
+
+
+@app.post("/api/labels/{chair_id}")
+def api_label_decision_all(chair_id: str, body: LabelDecision):
+    """"Check all" on /confirm: every dot and zone marker gets the same status."""
+    if body.status not in ("pending", "confirmed", "rejected"):
+        raise HTTPException(422, "status must be pending, confirmed or rejected")
+    chair = _chair(chair_id)
+    for label in chair["labels"]:
+        label["status"] = body.status
+    store.save_chair(chair)
+    return {"status": body.status, "count": len(chair["labels"]),
+            "pending": sum(l["status"] == "pending" for l in chair["labels"])}

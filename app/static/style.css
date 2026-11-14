@@ -8,6 +8,9 @@
   --ink: #ffffff;
   --ink-soft: #cfe0df;
   --warn: #f2b84b;
+  --status-pending: #8a9596;
+  --status-ok: #1E8E3E;
+  --status-no: #D93025;
   --radius: 16px;
   font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
 }
@@ -142,22 +145,6 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 .step-figure { display: block; margin-top: 8px; color: var(--ink-soft); font-size: 0.8rem; text-decoration: none; }
 .step-figure img { display: block; max-width: 100%; max-height: 260px; background: #fff; border-radius: 8px; margin-bottom: 4px; }
 
-/* Confirm list */
-.decide-list { list-style: none; padding: 0; display: grid; gap: 8px; }
-.decide {
-  display: grid; grid-template-columns: auto 1fr 52px 52px; gap: 10px; align-items: center;
-  background: var(--teal); border-radius: 12px; padding: 10px 12px; border: 2px solid transparent;
-}
-.decide-text span { display: block; color: var(--ink-soft); font-size: 0.85rem; }
-.decide.confirmed { border-color: var(--jade-bright); }
-.decide.rejected .decide-text { opacity: 0.5; text-decoration: line-through; }
-.btn-icon {
-  width: 52px; height: 52px; border-radius: 12px; border: 2px solid var(--ink-soft);
-  background: transparent; color: var(--ink); font-size: 1.4rem; cursor: pointer;
-}
-.decide.confirmed .yes { background: var(--jade-bright); border-color: var(--jade-bright); }
-.decide.rejected .no { background: #7a2b2b; border-color: #7a2b2b; }
-
 /* Passport */
 .passport-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .tag-id {
@@ -267,6 +254,54 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
 .crew-link span { color: var(--ink-soft); font-size: 0.9rem; }
 .crew-how { margin: 12px 0; }
 .crew-how h2 { margin-top: 0; }
+/* /confirm: a wide page with big photos; every ring is a button. Tap cycles grey (not checked) ->
+   green (right) -> red (wrong) -> grey; drag moves it (confirm.js). Colour shows the owner's decision,
+   so zone rings are coloured by status too; their badge says "Lift" (round) or "No" (square). */
+.confirm-page .wrap { max-width: 1200px; }
+.confirm-page .photos { grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 760px) { .confirm-page .photos { grid-template-columns: 1fr 1fr; } }
+.confirm-page .photo figcaption { font-size: 0.95rem; }
+.confirm-page .photo-frame .pin {
+  width: 44px; height: 44px; border-width: 4px; cursor: grab; touch-action: none; user-select: none;
+  -webkit-user-select: none; -webkit-touch-callout: none; outline-offset: 4px;
+}
+.confirm-page .photo-frame .pin.dragging { cursor: grabbing; z-index: 10; }
+.confirm-page .photo-frame .pin-badge { width: 32px; height: 32px; margin: -16px 0 0 -16px; font-size: 1rem; border-width: 2px; }
+.confirm-page .photo-frame .pin-line { width: 14px; height: 3px; margin-top: -1.5px; }
+.confirm-page .photo-frame .side-ur .pin-badge { transform: translate(36px, -36px); }  .confirm-page .photo-frame .side-ur .pin-line { transform: rotate(-45deg) translateX(20px); }
+.confirm-page .photo-frame .side-ul .pin-badge { transform: translate(-36px, -36px); } .confirm-page .photo-frame .side-ul .pin-line { transform: rotate(-135deg) translateX(20px); }
+.confirm-page .photo-frame .side-dr .pin-badge { transform: translate(36px, 36px); }   .confirm-page .photo-frame .side-dr .pin-line { transform: rotate(45deg) translateX(20px); }
+.confirm-page .photo-frame .side-dl .pin-badge { transform: translate(-36px, 36px); }  .confirm-page .photo-frame .side-dl .pin-line { transform: rotate(135deg) translateX(20px); }
+.confirm-page .photo-frame .pin.pending, .confirm-page .photo-frame .pin.zone.pending { border-color: var(--status-pending); display: block; }
+.confirm-page .photo-frame .pin.confirmed, .confirm-page .photo-frame .pin.zone.confirmed { border-color: var(--status-ok); display: block; }
+.confirm-page .photo-frame .pin.rejected, .confirm-page .photo-frame .pin.zone.rejected { border-color: var(--status-no); display: block; }
+.confirm-page .photo-frame .pin.pending .pin-badge, .confirm-page .photo-frame .pin.zone.pending .pin-badge { background: var(--status-pending); color: #fff; }
+.confirm-page .photo-frame .pin.confirmed .pin-badge, .confirm-page .photo-frame .pin.zone.confirmed .pin-badge { background: var(--status-ok); color: #fff; }
+.confirm-page .photo-frame .pin.rejected .pin-badge, .confirm-page .photo-frame .pin.zone.rejected .pin-badge { background: var(--status-no); color: #fff; }
+.confirm-page .photo-frame .pin.pending .pin-line, .confirm-page .photo-frame .pin.zone.pending .pin-line { background: var(--status-pending); }
+.confirm-page .photo-frame .pin.confirmed .pin-line, .confirm-page .photo-frame .pin.zone.confirmed .pin-line { background: var(--status-ok); }
+.confirm-page .photo-frame .pin.rejected .pin-line, .confirm-page .photo-frame .pin.zone.rejected .pin-line { background: var(--status-no); }
+.confirm-page .photo-frame .pin.zone .pin-badge { font-size: 0.7rem; }
+.confirm-page .photo-frame .pin.zone.hold .pin-badge::after { content: "Lift"; }
+.confirm-page .photo-frame .pin.zone.no_hold .pin-badge::after { content: "No"; }
+.confirm-page .photo-frame .zone-box.pending { border-color: var(--status-pending); display: block; }
+.confirm-page .photo-frame .zone-box.confirmed { border-color: var(--status-ok); display: block; }
+.confirm-page .photo-frame .zone-box.rejected { border-color: var(--status-no); display: block; opacity: 0.6; }
+.confirm-page .zone-legend { display: none; }   /* colour means status here; the top legend explains Lift / No */
+.key { display: inline-block; padding: 0 8px; border-radius: 999px; color: #fff; font-weight: 700; }
+.key.pending { background: var(--status-pending); } .key.confirmed { background: var(--status-ok); } .key.rejected { background: var(--status-no); }
+.confirm-legend { list-style: none; padding: 0; margin: 8px 0 16px; display: grid; gap: 6px 20px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.confirm-legend li { line-height: 1.3; }
+.confirm-legend span:not(.zkey) { color: var(--ink-soft); font-size: 0.85rem; }
+.zkey { display: inline-grid; place-items: center; min-width: 30px; height: 22px; padding: 0 5px; color: #fff;
+  background: #5f6b6c; font-size: 0.7rem; font-weight: 700; border-radius: 11px; vertical-align: middle; }
+.zkey.no_hold { border-radius: 5px; }
+.unplaced { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.pin-chip { font: inherit; color: #fff; padding: 10px 14px; min-height: 48px; border-radius: 12px; cursor: pointer;
+  border: 3px solid var(--status-pending); background: var(--teal); display: flex; align-items: center; gap: 8px; }
+.pin-chip.confirmed { border-color: var(--status-ok); } .pin-chip.rejected { border-color: var(--status-no); }
+
 .tag-form { display: flex; gap: 8px; }
 .tag-form input { flex: 1; min-width: 0; font: inherit; font-size: 1.2rem; letter-spacing: 0.08em; text-transform: uppercase;
   padding: 10px 12px; border-radius: 12px; border: 2px solid var(--gold); background: var(--teal-deep); color: var(--ink); }
@@ -281,8 +316,6 @@ h3 { font-size: 1rem; margin: 1em 0 0.3em; }
   .facts th, .facts td { display: block; padding: 2px 0; border: 0; }
   .facts tr { display: block; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
   .facts .links { text-align: left; }
-  .decide { grid-template-columns: auto 1fr 48px 48px; }
-  .btn-icon { width: 48px; height: 48px; }
 }
 
 /* ---------- Printed card: A5 landscape (210 × 148 mm) ---------- */

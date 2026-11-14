@@ -140,3 +140,9 @@ def test_render_hold_and_no_hold_colours():
     # Part pins drawn with the zones stay readable: gold ring, see-through centre
     both = render.draw_markers(image, [{"n": 1, "x": 0.5, "y": 0.2}], zones)
     assert both.getpixel((500 + r, 150)) == (0xC3, 0xAC, 0x86) and both.getpixel((500, 150)) == (128, 128, 128)
+
+
+def test_dragging_a_zone_pin_moves_its_box():
+    install(zone_status=("pending", "pending"))
+    r = client.post("/api/labels/chair-a/3/move", json={"x": 0.5, "y": 0.6})   # was 0.3, 0.4
+    assert [round(v, 3) for v in r.json()["box"]] == [0.4, 0.5, 0.6, 0.7]

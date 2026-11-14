@@ -95,3 +95,32 @@ def test_confirm_shows_all_four_views():
     for view in ("left", "right", "front", "rear"):
         assert f'src="/photo/chair-a/{view}.jpg"' in text
     assert text.count('id="dot-') == 2   # the fixture's two labels, each on one photo
+
+
+def test_confirm_pins_are_tap_targets_without_a_list():
+    text = client.get("/confirm/chair-a").text
+    assert 'data-id="1" role="button"' in text and 'data-id="2" role="button"' in text
+    assert "decide-list" not in text and "btn-icon" not in text
+    assert 'role="button"' not in client.get("/passport/chair-a").text   # only /confirm is clickable
+
+
+def test_tap_cycle_back_to_pending_locks_done():
+    client.post("/api/labels/chair-a/1", json={"status": "confirmed"})
+    client.post("/api/labels/chair-a/2", json={"status": "rejected"})
+    assert "disabled" not in client.get("/confirm/chair-a").text.split('id="done"')[1].split(">")[0]
+    assert client.post("/api/labels/chair-a/2", json={"status": "pending"}).json()["pending"] == 1
+
+
+def test_drag_moves_a_pin():
+    r = client.post("/api/labels/chair-a/1/move", json={"x": 0.25, "y": 1.7})
+    assert r.status_code == 200 and (r.json()["x"], r.json()["y"]) == (0.25, 1.0)   # clamped to the photo
+    assert "left: 25.0%; top: 100.0%" in client.get("/confirm/chair-a").text
+    assert client.post("/api/labels/chair-a/9/move", json={"x": 0.1, "y": 0.1}).status_code == 404
+
+
+def test_check_all_confirms_every_label():
+    assert 'id="check-all"' in client.get("/confirm/chair-a").text
+    r = client.post("/api/labels/chair-a", json={"status": "confirmed"})
+    assert r.json() == {"status": "confirmed", "count": 2, "pending": 0}
+    assert "label hidden" not in client.get("/passport/chair-a").text
+    assert client.post("/api/labels/chair-a", json={"status": "maybe"}).status_code == 422

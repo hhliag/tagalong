@@ -11,17 +11,22 @@
     {% endif %}
     <span class="pin zone {{ z.zone }} {{ st }} side-{{ z.side }}" id="dot-{{ z.id }}"
           style="left: {{ (z.x * 100)|round(1) }}%; top: {{ (z.y * 100)|round(1) }}%"
-          title="{{ 'Lift here' if z.zone == 'hold' else 'Do not hold' }}: {{ parts[z.part_id].name.value }}"><span class="pin-line"></span><span class="pin-badge"></span></span>
+          title="{{ 'Lift here' if z.zone == 'hold' else 'Do not hold' }}: {{ parts[z.part_id].name.value }}"{% if show_status %} {{ tap(z) }}{% endif %}><span class="pin-line"></span><span class="pin-badge"></span></span>
     {% endfor %}
     {% for l in p.labels %}
     <span class="pin part {{ l.status if show_status else 'confirmed' }} side-{{ l.side }}" id="dot-{{ l.id }}"
           style="left: {{ (l.x * 100)|round(1) }}%; top: {{ (l.y * 100)|round(1) }}%"
-          title="{{ l.code }} · {{ parts[l.part_id].name.value }}"><span class="pin-line"></span><span class="pin-badge">{{ l.code }}</span></span>
+          title="{{ l.code }} · {{ parts[l.part_id].name.value }}"{% if show_status %} {{ tap(l) }}{% endif %}><span class="pin-line"></span><span class="pin-badge">{{ l.code }}</span></span>
     {% endfor %}
   </div>
   <figcaption>{{ p.file.rsplit('.', 1)[0]|capitalize }} view</figcaption>
   {% if p.zones %}{{ legend() }}{% endif %}
 </figure>
+{%- endmacro %}
+
+{# /confirm: a pin is a button. Tap cycles grey -> green -> red -> grey; drag moves it (confirm.js). #}
+{% macro tap(l) -%}
+data-id="{{ l.id }}" role="button" tabindex="0" aria-label="{{ l.status }}"
 {%- endmacro %}
 
 {% macro legend() -%}
