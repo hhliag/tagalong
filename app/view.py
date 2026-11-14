@@ -39,7 +39,7 @@ def split_labels(chair):
 def photos_with_labels(chair, labels, count, zones=()):
     """Photos that carry the given labels or zones first (in label order), then the default views, up to `count`."""
     files = []
-    for label in sorted([*labels, *zones], key=lambda l: l["n"]):
+    for label in sorted([*labels, *zones], key=lambda l: l.get("id", l.get("n"))):
         if label["photo"] and label["photo"] not in files:
             files.append(label["photo"])
     for f in DEFAULT_PHOTOS:
@@ -57,15 +57,17 @@ def handling(record, zone_labels, include_pending=False):
     if "handling" not in record:
         return None
     parts = {p["id"]: p for p in record["parts"]}
-    by_zone = {l.get("zone_id"): l for l in zone_labels}
-    shown_status = ("confirmed", "pending") if include_pending else ("confirmed",)
+    by_zone = {}
+    for l in zone_labels:  # a zone can have a marker on several photos
+        by_zone.setdefault(l.get("zone_id"), set()).add(l["status"])
+    shown_status = {"confirmed", "pending"} if include_pending else {"confirmed"}
     items = {"hold": [], "no_hold": []}
     for z in record["handling"]:
-        label = by_zone.get(z["id"])
-        if label is None or label["status"] not in shown_status:
+        statuses = by_zone.get(z["id"], set())
+        if not statuses & shown_status:
             continue
         items[z["kind"]].append({**z, "part_name": parts[z["part_id"]]["name"]["value"],
-                                 "owner_confirmed": label["status"] == "confirmed"})
+                                 "owner_confirmed": "confirmed" in statuses})
     shown = len(items["hold"]) + len(items["no_hold"])
     return {
         "hold": items["hold"],
@@ -128,7 +130,7 @@ def passport(chair, record, include_pending=False):
         "ssr_text": rules.ssr_text(ssr),
         "wh": wh,
         "facts": fact_rows(facts, wh),
-        "return_checks": [f"{parts[l['part_id']]['name']['value']} in place" for l in confirmed]
+        "return_checks": [f"{parts[pid]['name']['value']} in place" for pid in dict.fromkeys(l["part_id"] for l in confirmed)]
         + [s["action"] for s in steps if s["phase"] == "at_arrival"],
     }
 

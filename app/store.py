@@ -51,6 +51,8 @@ def chair(chair_id):
         return _read(state)
     data = _read(source)
     data["stages"] = []  # build stages finished so far
+    for label in data["labels"]:
+        label.setdefault("id", label["n"])  # older records: one dot per part, so n is unique
     return data
 
 

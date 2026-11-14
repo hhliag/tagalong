@@ -4,7 +4,7 @@
 {% block crumbs %}<span class="crumb">Confirm</span>{% endblock %}
 {% block content %}
 <h1>Is each label on the right part?</h1>
-<p class="lead">Tap ✓ if the numbered dot sits on the part. Tap ✗ to hide it.</p>
+<p class="lead">Each part is marked on every photo where it shows. Tap ✓ if that dot sits on the part, ✗ to hide it.</p>
 
 <div class="photos">
   {% for p in photos %}{{ photo(chair.chair_id, p, parts, show_status=true) }}{% endfor %}
@@ -12,14 +12,14 @@
 
 <ul class="decide-list">
   {% for l in part_labels %}
-  <li class="decide {{ l.status }}" id="row-{{ l.n }}">
+  <li class="decide {{ l.status }}" id="row-{{ l.id }}">
     <span class="dot dot-inline {{ l.status }}">{{ l.n }}</span>
     <div class="decide-text">
       <b>{{ parts[l.part_id].name.value }}</b>
       <span>{{ parts[l.part_id].where }} · {{ l.photo.rsplit('.', 1)[0] }} photo</span>
     </div>
-    <button class="btn-icon yes" data-n="{{ l.n }}" data-status="confirmed" aria-label="Confirm label {{ l.n }}">✓</button>
-    <button class="btn-icon no" data-n="{{ l.n }}" data-status="rejected" aria-label="Hide label {{ l.n }}">✗</button>
+    <button class="btn-icon yes" data-id="{{ l.id }}" data-status="confirmed" aria-label="Confirm label {{ l.n }} on the {{ l.photo }}">✓</button>
+    <button class="btn-icon no" data-id="{{ l.id }}" data-status="rejected" aria-label="Hide label {{ l.n }} on the {{ l.photo }}">✗</button>
   </li>
   {% endfor %}
 </ul>
@@ -29,14 +29,14 @@
 <p class="lead">From the manual. Tap ✓ to keep a zone on the passport, ✗ to hide it.</p>
 <ul class="decide-list">
   {% for l in zone_labels %}{% set z = zones.get(l.zone_id) %}
-  <li class="decide {{ l.status }}" id="row-{{ l.n }}">
+  <li class="decide {{ l.status }}" id="row-{{ l.id }}">
     <span class="zone-mark {{ l.zone }} {{ l.status }} inline"></span>
     <div class="decide-text">
       <b>{{ 'Lift here' if l.zone == 'hold' else 'Do not hold' }}: {{ parts[l.part_id].name.value }}</b>
       <span>{% if z %}{{ z.reason }} · p. {{ z.source.page }} · {% endif %}{{ (l.photo.rsplit('.', 1)[0] ~ ' photo') if l.photo else 'not visible in the photos' }}</span>
     </div>
-    <button class="btn-icon yes" data-n="{{ l.n }}" data-status="confirmed" aria-label="Keep zone">✓</button>
-    <button class="btn-icon no" data-n="{{ l.n }}" data-status="rejected" aria-label="Hide zone">✗</button>
+    <button class="btn-icon yes" data-id="{{ l.id }}" data-status="confirmed" aria-label="Keep zone">✓</button>
+    <button class="btn-icon no" data-id="{{ l.id }}" data-status="rejected" aria-label="Hide zone">✗</button>
   </li>
   {% endfor %}
 </ul>

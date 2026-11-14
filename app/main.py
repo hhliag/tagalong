@@ -191,15 +191,16 @@ class LabelDecision(BaseModel):
     status: str
 
 
-@app.post("/api/labels/{chair_id}/{n}")
-def api_label_decision(chair_id: str, n: int, body: LabelDecision):
+@app.post("/api/labels/{chair_id}/{label_id}")
+def api_label_decision(chair_id: str, label_id: int, body: LabelDecision):
+    """One dot (part label or zone marker), by its unique id."""
     if body.status not in ("pending", "confirmed", "rejected"):
         raise HTTPException(422, "status must be pending, confirmed or rejected")
     chair = _chair(chair_id)
-    label = next((l for l in chair["labels"] if l["n"] == n), None)
+    label = next((l for l in chair["labels"] if l["id"] == label_id), None)
     if label is None:
         raise HTTPException(404, "Unknown label")
     label["status"] = body.status
     store.save_chair(chair)
-    return {"n": n, "status": body.status,
+    return {"id": label_id, "status": body.status,
             "pending": sum(l["status"] == "pending" for l in chair["labels"])}

@@ -61,3 +61,10 @@ Where DESIGN.md was unclear, the simplest option was chosen and noted here. Chan
 46. **The handling stage reads `record.json`, so rerun handling after extract** (`--stage all` does). Dropped zones and conflicts are kept in `out/<chair>/handling.json` for the report, not in the library record.
 47. **Crew lookup (asked for in chat, not in DESIGN).** `/crew` takes a tag ID (case and spaces ignored); `/crew/{tag_id}` is the crew view: how to hold, photos, must do, battery and size, IATA lines. The QR on the printed card now opens `/crew/{tag_id}` instead of `/passport/{chair_id}` (§6), labelled "Crew: scan". Scanning uses the phone's own camera app; there is no in-page scanner. §10 lists an "inspector page" as out of scope; this is a read-only view of the same record.
 48. **Timeout.** The handling call on the E100 manual (17 pages) took 60 s and failed once with 504 at 90 s; it worked with `STAGE_TIMEOUT=180`.
+
+## Dots on every photo (14 Nov 2026, after the first review)
+
+49. **A dot on every photo where the part shows** (was: best photo only). The same part keeps the same number on every photo; each dot has its own `id`, and the owner confirms each dot on its own, since a part can be right on one photo and wrong on another. Older chair records without `id` use `n`. The "closeup wins" rule is gone: a close-up just adds dots.
+50. **One entry per instance.** The label prompt asks for one box per visible instance (left and right levers, two footrests), because one box around both put the dot on empty space between them. It also says to ignore wheelchairs in the background.
+51. **Minimum confidence 0.5** for a dot. Below that, the detection stays in REPORT.md but gets no dot.
+52. **Zones too** get a marker on every photo where their part shows; a zone is on the passport when at least one of its markers is confirmed.

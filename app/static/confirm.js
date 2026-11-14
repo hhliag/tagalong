@@ -3,7 +3,7 @@ const chairId = document.body.dataset.chair;
 
 document.querySelectorAll(".decide button").forEach((btn) => {
   btn.addEventListener("click", async () => {
-    const n = btn.dataset.n;
+    const n = btn.dataset.id;
     const status = btn.dataset.status;
     const res = await fetch(`/api/labels/${chairId}/${n}`, {
       method: "POST",

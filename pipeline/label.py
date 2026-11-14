@@ -37,6 +37,8 @@ def build_prompt(view_name, parts, size, gemini, zone_kinds=None):
     lines = [
         f"This is one photo of a wheelchair: the {view_name}. It is {size[0]} x {size[1]} pixels.",
         "Find each part below in this photo. The 'where' text is from the maker's manual.",
+        "Look only at the wheelchair in the centre of the photo, the one the photo is about. "
+        "Ignore other wheelchairs in the background.",
         "",
         "PARTS",
     ]
@@ -58,8 +60,10 @@ def build_prompt(view_name, parts, size, gemini, zone_kinds=None):
                      '(from the left) and height (from the top), and "box": [x0, y0, x1, y1], a tight box '
                      "around the part as fractions 0-1 (left, top, right, bottom).")
         example = '{"part_id": "...", "visible": true, "confidence": 0.8, "x": 0.5, "y": 0.5, "box": [0.4, 0.4, 0.6, 0.6]}'
-    lines += ["When a part is not visible, set visible false and leave the location out.", "",
-              f'Reply with JSON only: {{"parts": [{example}, ...]}} with one entry per part.']
+    lines += ["If a part appears more than once in this photo (for example a lever on each side, or two footrests), "
+              "give one entry per visible instance, each with its own tight box around that one instance.",
+              "When a part is not visible, give one entry with visible false and no location.", "",
+              f'Reply with JSON only: {{"parts": [{example}, ...]}}.']
     return "\n".join(lines)
 
 
@@ -103,34 +107,34 @@ def _confidence(v):
         return 0.0
 
 
+MIN_CONFIDENCE = 0.5   # visible detections below this get no dot
+
+
 def parse_detections(raw, part_ids):
-    found = {}
+    """Every visible instance of every part (a part can appear twice, e.g. left and right levers),
+    plus one not-visible entry for each part that was not seen."""
+    seen, not_seen = [], {}
     for det in raw.get("parts") or []:
         pid = det.get("part_id")
-        if pid not in part_ids or pid in found:
+        if pid not in part_ids:
             continue
         xy = to_xy(det)
-        visible = bool(det.get("visible")) and xy is not None
-        found[pid] = {"part_id": pid, "visible": visible, "confidence": _confidence(det.get("confidence")),
-                      "x": round(xy[0], 4) if xy else None, "y": round(xy[1], 4) if xy else None,
-                      "box": to_box(det) if visible else None}
-    return [found.get(pid, {"part_id": pid, "visible": False, "confidence": 0.0, "x": None, "y": None, "box": None})
-            for pid in part_ids]
+        conf = _confidence(det.get("confidence"))
+        if det.get("visible") and xy is not None:
+            seen.append({"part_id": pid, "visible": True, "confidence": conf,
+                         "x": round(xy[0], 4), "y": round(xy[1], 4), "box": to_box(det)})
+        else:
+            not_seen.setdefault(pid, conf)
+    seen_ids = {d["part_id"] for d in seen}
+    missing = [{"part_id": pid, "visible": False, "confidence": not_seen.get(pid, 0.0), "x": None, "y": None,
+                "box": None} for pid in part_ids if pid not in seen_ids]
+    return seen + missing
 
 
-def best_per_part(detections):
-    """{part_id: (photo_name, det)}: a visible closeup_<part> wins, else the highest confidence."""
-    best = {}
-    for photo, dets in detections.items():
-        for d in dets:
-            if not d["visible"]:
-                continue
-            pid = d["part_id"]
-            closeup = photo == f"closeup_{pid}.jpg"
-            rank = (closeup, d["confidence"])
-            if pid not in best or rank > best[pid][0]:
-                best[pid] = (rank, photo, d)
-    return {pid: (photo, d) for pid, (_, photo, d) in best.items()}
+def visible_on(detections, part_id):
+    """[(photo, detection)] for every photo where the part is visible with enough confidence, in photo order."""
+    return [(photo, d) for photo, dets in detections.items() for d in dets
+            if d["part_id"] == part_id and d["visible"] and d["confidence"] >= MIN_CONFIDENCE]
 
 
 def number_order(record):
@@ -145,23 +149,28 @@ def number_order(record):
 
 
 def make_labels(record, detections):
-    """Part labels (zone null, numbered for the steps), then one zone label per handling zone.
+    """A dot on every photo where a part is visible. The same part keeps the same number n on every photo
+    (n follows the first must_do step that uses the part); "id" is unique per dot, so the owner can
+    confirm each dot on its own. Then zone labels the same way.
 
-    A zone whose part is not visible in any photo still gets a label with photo null, so the owner
+    A zone whose part is not visible in any photo still gets one label with photo null, so the owner
     can confirm it from the list on /confirm.
     """
-    best = best_per_part(detections)
-    labels = []
+    labels, n = [], 0
     for pid in number_order(record):
-        if pid in best:
-            photo, d = best[pid]
-            labels.append({"part_id": pid, "n": len(labels) + 1, "photo": photo, "x": d["x"], "y": d["y"],
-                           "confidence": d["confidence"], "status": "pending", "zone": None})
+        hits = visible_on(detections, pid)
+        if not hits:
+            continue
+        n += 1
+        for photo, d in hits:
+            labels.append({"id": len(labels) + 1, "part_id": pid, "n": n, "photo": photo, "x": d["x"], "y": d["y"],
+                           "box": d.get("box"), "confidence": d["confidence"], "status": "pending", "zone": None})
     for z in record.get("handling") or []:
-        photo, d = best.get(z["part_id"], (None, {}))
-        labels.append({"part_id": z["part_id"], "n": len(labels) + 1, "photo": photo, "x": d.get("x"),
-                       "y": d.get("y"), "box": d.get("box"), "confidence": d.get("confidence", 0.0),
-                       "status": "pending", "zone": z["kind"], "zone_id": z["id"]})
+        for photo, d in visible_on(detections, z["part_id"]) or [(None, {})]:
+            labels.append({"id": len(labels) + 1, "part_id": z["part_id"], "n": None, "photo": photo,
+                           "x": d.get("x"), "y": d.get("y"), "box": d.get("box"),
+                           "confidence": d.get("confidence", 0.0), "status": "pending",
+                           "zone": z["kind"], "zone_id": z["id"]})
     return labels
 
 
@@ -218,8 +227,11 @@ def run(chair_id):
     names = {p["id"]: p["name"]["value"] for p in record["parts"]}
     part_labels = [l for l in device["labels"] if not l["zone"]]
     zone_labels = [l for l in device["labels"] if l["zone"]]
-    summary = ", ".join(f"{l['n']} {names[l['part_id']]} ({l['photo']}, {l['confidence']:.2f})" for l in part_labels)
+    placed = {}
+    for l in part_labels:
+        placed.setdefault((l["n"], l["part_id"]), []).append(l["photo"].rsplit(".", 1)[0])
+    summary = ", ".join(f"{n} {names[pid]} ({'/'.join(ps)})" for (n, pid), ps in placed.items())
     zones = ", ".join(f"{l['zone']} {names[l['part_id']]} ({l['photo'] or 'not visible'})" for l in zone_labels)
-    print(f"label: {len(photos)} photos, {len(part_labels)} of {len(part_ids)} parts placed: {summary or 'none'}"
-          + (f"; zones: {zones}" if zones else "") + f" -> devices/{chair_id}.json")
+    print(f"label: {len(photos)} photos, {len(placed)} of {len(part_ids)} parts placed, {len(part_labels)} dots: "
+          f"{summary or 'none'}" + (f"; zones: {zones}" if zones else "") + f" -> devices/{chair_id}.json")
     return device

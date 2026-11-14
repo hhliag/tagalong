@@ -51,8 +51,11 @@ def test_offline_run_end_to_end(capsys):
 
     device = json.loads((config.DEVICES_DIR / "chair-t.json").read_text())
     assert device["plate_read"]["raw"] == "from sample data"
+    # a dot on every photo where the part shows; the same part keeps its number
     assert [(l["part_id"], l["n"], l["photo"]) for l in device["labels"] if not l["zone"]] == [
-        ("freewheel_lever", 1, "left.jpg"), ("battery", 2, "rear.jpg"), ("armrest", 3, "left.jpg")]
+        ("freewheel_lever", 1, "left.jpg"), ("freewheel_lever", 1, "right.jpg"), ("battery", 2, "rear.jpg"),
+        ("armrest", 3, "left.jpg")]
+    assert [l["id"] for l in device["labels"]] == list(range(1, len(device["labels"]) + 1))
     # one zone label per verified zone; the made-up "seat" zone was dropped; armrest seen on the left photo
     zones = [(l["zone"], l["part_id"], l["photo"], l["status"]) for l in device["labels"] if l["zone"]]
     assert zones == [("hold", "seat_frame", None, "pending"), ("no_hold", "armrest", "left.jpg", "pending")]
@@ -66,7 +69,7 @@ def test_offline_run_end_to_end(capsys):
     card = (out / "card.html").read_text()
     assert "Labels not yet confirmed by the owner." in card
     assert "Sample photos. In real use the owner takes them." in card
-    assert card.count("data:image/jpeg;base64,") == 2               # the two photos with labels
+    assert card.count("data:image/jpeg;base64,") == 3               # the three photos with labels
     assert "AI-extracted · page verified" in card and "Quote not found on page" in card
     assert "≈ 272 Wh (computed, not a manual figure)" in card
     assert 'class="concept"' in card
@@ -91,7 +94,7 @@ def test_offline_run_end_to_end(capsys):
     client = TestClient(app)
     page = client.get("/passport/chair-t").text
     assert "WHILL Model C2" in page and "Pull both levers." in page
-    assert "3 labels hidden" in page and "2 handling zones hidden" in page
+    assert "4 labels hidden" in page and "2 handling zones hidden" in page
     assert "WCLB or WCLX" in client.get("/uses/chair-t/checkin").text
 
 

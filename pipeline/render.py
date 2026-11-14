@@ -100,7 +100,10 @@ def _fmt(v):
 def build_report(chair_id, record, pages_data, device, detections, handling=None):
     names = {p["id"]: p["name"]["value"] for p in record["parts"]}
     label_at = {(l["part_id"], l["photo"]): l["n"] for l in device["labels"] if not l.get("zone")}
-    zone_photo = {l.get("zone_id"): l["photo"] for l in device["labels"] if l.get("zone")}
+    zone_photos = {}
+    for l in device["labels"]:
+        if l.get("zone"):
+            zone_photos.setdefault(l["zone_id"], set()).add(l["photo"])
     cited = _cited_items(record)
     failed = [(w, c) for w, c in cited if not c["verified"]]
     corrected = [(w, c) for w, c in cited if c.get("note")]
@@ -163,7 +166,7 @@ def build_report(chair_id, record, pages_data, device, detections, handling=None
                 d = next((d for d in dets if d["part_id"] == z["part_id"]), None)
                 if not d:
                     continue
-                marker = "yes" if zone_photo.get(z["id"]) == photo else ""
+                marker = "yes" if photo in zone_photos.get(z["id"], set()) else ""
                 md.append(f"| {z['id']} | {z['kind']} | {names[z['part_id']]} | {z['source']['page']} | yes | {photo}"
                           f" | {'yes' if d['visible'] else 'no'} | {_fmt(d['confidence'])} | {_fmt(d['x'])} | {_fmt(d['y'])}"
                           f" | {marker} |  |")
@@ -174,6 +177,8 @@ def run(chair_id):
     record = read_stage_file(chair_id, "record.json", "extract")
     pages_data = read_stage_file(chair_id, "pages.json", "pages")
     device = read_stage_file(chair_id, "device.json", "label")
+    for label in device["labels"]:
+        label.setdefault("id", label["n"])  # device.json from before dots had their own id
     detections = read_stage_file(chair_id, "detections.json", "label")
     meta = read_meta(chair_id)
     out = out_dir(chair_id)

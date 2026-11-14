@@ -34,16 +34,35 @@ def test_missing_location_is_not_visible():
 
 # ---------- choosing and numbering ----------
 
-def test_best_photo_per_part_and_closeup_wins():
-    det = lambda pid, conf, vis=True: {"part_id": pid, "visible": vis, "confidence": conf, "x": 0.5, "y": 0.5}
+def test_every_photo_gets_a_dot_with_the_same_number():
+    det = lambda pid, conf, x=0.5, vis=True: {"part_id": pid, "visible": vis, "confidence": conf, "x": x, "y": 0.5,
+                                              "box": None}
+    record = {"parts": [{"id": "lever"}, {"id": "battery"}], "steps": []}
     detections = {
-        "left.jpg": [det("lever", 0.9), det("battery", 0.4)],
-        "rear.jpg": [det("lever", 0.5), det("battery", 0.8)],
-        "closeup_lever.jpg": [det("lever", 0.3), det("battery", 0.99, vis=False)],
+        "left.jpg": [det("lever", 0.9), det("battery", 0.4)],              # battery too unsure: no dot
+        "rear.jpg": [det("lever", 0.8, x=0.3), det("lever", 0.7, x=0.7), det("battery", 0.8)],   # two levers
+        "front.jpg": [det("lever", 0.9, vis=False)],
     }
-    best = label.best_per_part(detections)
-    assert best["lever"][0] == "closeup_lever.jpg"
-    assert best["battery"][0] == "rear.jpg"
+    labels = label.make_labels(record, detections)
+    assert [(l["id"], l["part_id"], l["n"], l["photo"], l["x"]) for l in labels] == [
+        (1, "lever", 1, "left.jpg", 0.5), (2, "lever", 1, "rear.jpg", 0.3), (3, "lever", 1, "rear.jpg", 0.7),
+        (4, "battery", 2, "rear.jpg", 0.5)]
+
+
+def test_parse_keeps_each_instance():
+    raw = {"parts": [{"part_id": "lever", "visible": True, "confidence": 0.9, "box_2d": [600, 380, 680, 420]},
+                     {"part_id": "lever", "visible": True, "confidence": 0.9, "box_2d": [600, 600, 680, 650]},
+                     {"part_id": "joystick", "visible": False, "confidence": 0.7}]}
+    dets = label.parse_detections(raw, ["lever", "joystick", "seat"])
+    assert [(d["part_id"], d["visible"], d["x"]) for d in dets] == [
+        ("lever", True, 0.4), ("lever", True, 0.625), ("joystick", False, None), ("seat", False, None)]
+    assert dets[2]["confidence"] == 0.7
+
+
+def test_prompt_asks_for_each_instance_and_ignores_background():
+    prompt = label.build_prompt("rear view", [{"id": "lever", "name": {"value": "Lever"}, "where": "motor"}],
+                                (768, 1024), gemini=True)
+    assert "one entry per visible instance" in prompt and "Ignore other wheelchairs" in prompt
 
 
 def test_labels_numbered_by_first_must_do_step():

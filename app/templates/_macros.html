@@ -6,15 +6,15 @@
     {% for z in p.zones or [] %}
     {% set st = z.status if show_status else 'confirmed' %}
     {% if z.box %}
-    <span class="zone-box {{ z.zone }} {{ st }}" id="box-{{ z.n }}"
+    <span class="zone-box {{ z.zone }} {{ st }}" id="box-{{ z.id }}"
           style="left: {{ (z.box[0] * 100)|round(1) }}%; top: {{ (z.box[1] * 100)|round(1) }}%; width: {{ ((z.box[2] - z.box[0]) * 100)|round(1) }}%; height: {{ ((z.box[3] - z.box[1]) * 100)|round(1) }}%"></span>
     {% endif %}
-    <span class="zone-mark {{ z.zone }} {{ st }}" id="dot-{{ z.n }}"
+    <span class="zone-mark {{ z.zone }} {{ st }}" id="dot-{{ z.id }}"
           style="left: {{ (z.x * 100)|round(1) }}%; top: {{ (z.y * 100)|round(1) }}%"
           title="{{ 'Lift here' if z.zone == 'hold' else 'Do not hold' }}: {{ parts[z.part_id].name.value }}"></span>
     {% endfor %}
     {% for l in p.labels %}
-    <span class="dot {{ l.status if show_status else 'confirmed' }}" id="dot-{{ l.n }}"
+    <span class="dot {{ l.status if show_status else 'confirmed' }}" id="dot-{{ l.id }}"
           style="left: {{ (l.x * 100)|round(1) }}%; top: {{ (l.y * 100)|round(1) }}%"
           title="{{ parts[l.part_id].name.value }}">{{ l.n }}</span>
     {% endfor %}
