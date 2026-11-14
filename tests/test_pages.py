@@ -88,3 +88,10 @@ def test_print_card():
 def test_photo_placeholder_when_missing():
     r = client.get("/photo/chair-a/left.jpg")
     assert r.status_code == 200 and r.headers["content-type"].startswith("image/svg+xml")
+
+
+def test_confirm_shows_all_four_views():
+    text = client.get("/confirm/chair-a").text
+    for view in ("left", "right", "front", "rear"):
+        assert f'src="/photo/chair-a/{view}.jpg"' in text
+    assert text.count('id="dot-') == 2   # the fixture's two labels, each on one photo

@@ -13,6 +13,7 @@ from . import config, store, view
 HERE = Path(__file__).resolve().parent
 USES = {"checkin": "Check-in", "onboard": "On board", "return": "Return check"}
 PHOTO_NAME = re.compile(r"^[a-z0-9_]+\.jpg$")
+CONFIRM_VIEWS = ["left.jpg", "right.jpg", "front.jpg", "rear.jpg"]
 
 app = FastAPI(title="TagAlong")
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
@@ -62,10 +63,12 @@ def confirm(request: Request, chair_id: str):
     chair = _chair(chair_id)
     record = _record(chair["record_id"])
     labels = chair["labels"]
+    # All four views, so the owner sees the whole chair; then any close-up that carries a label.
+    files = CONFIRM_VIEWS + sorted({l["photo"] for l in labels} - set(CONFIRM_VIEWS))
     return _page(
         request, "confirm.html", chair=chair,
         parts={p["id"]: p for p in record["parts"]},
-        photos=view.photos_with_labels(chair, labels, max(2, len({l["photo"] for l in labels}))),
+        photos=[{"file": f, "labels": [l for l in labels if l["photo"] == f]} for f in files],
     )
 
 
