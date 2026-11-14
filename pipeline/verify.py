@@ -15,11 +15,20 @@ _TABLE = str.maketrans({
 })
 
 
+_CJK = r"[⺀-鿿豈-﫿]"
+
+
 def normalise(text):
-    """Lowercase, NFKC, unify quotes and dashes, join words hyphenated across line breaks, collapse whitespace."""
+    """Lowercase, NFKC, unify quotes and dashes, join words hyphenated across line breaks, collapse whitespace.
+
+    Whitespace next to a Chinese/Japanese character is dropped: those scripts use no spaces, so a
+    space there only comes from a PDF line break.
+    """
     t = unicodedata.normalize("NFKC", text or "").translate(_TABLE)
     t = re.sub(r"(\w)-[ \t]*\r?\n\s*(\w)", r"\1\2", t)
-    return re.sub(r"\s+", " ", t).strip().lower()
+    t = re.sub(r"\s+", " ", t)
+    t = re.sub(rf"\s+(?={_CJK})|(?<={_CJK})\s+", "", t)
+    return t.strip().lower()
 
 
 def normalise_pages(pages):

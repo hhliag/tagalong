@@ -22,16 +22,16 @@ def test_offline_run_end_to_end(capsys):
     make_chair(meta=META + "sample_photos: true\n")
     off = config.OUT_DIR / "chair-t" / "offline"
 
-    assert main(["chair-t"]) == 3                                   # waits at extract
+    assert main(["chair-t", "--provider", "offline"]) == 3                                   # waits at extract
     assert "Waiting for offline response:" in capsys.readouterr().out
     (off / "extract_1_response.json").write_text(json.dumps(RESPONSE))
 
     for n in range(1, 5):                                           # then once per photo
-        assert main(["chair-t"]) == 3
+        assert main(["chair-t", "--provider", "offline"]) == 3
         assert f"label_{n}_response.json" in capsys.readouterr().out
         (off / f"label_{n}_response.json").write_text(json.dumps(LABELS[n]))
 
-    assert main(["chair-t"]) == 0
+    assert main(["chair-t", "--provider", "offline"]) == 0
     out = config.OUT_DIR / "chair-t"
 
     device = json.loads((config.DEVICES_DIR / "chair-t.json").read_text())
@@ -63,7 +63,7 @@ def test_offline_run_end_to_end(capsys):
         assert (config.SAVED_DIR / "chair-t" / name).is_file(), name
 
     # Re-run a single stage from the files in out/
-    assert main(["chair-t", "--stage", "render"]) == 0
+    assert main(["chair-t", "--stage", "render", "--provider", "offline"]) == 0
 
     # Wire M1: the pages now use the pipeline's records
     client = TestClient(app)
@@ -80,11 +80,11 @@ def test_card_has_no_sample_line_unless_meta_says_so():
     (off / "extract_1_response.json").write_text(json.dumps(RESPONSE))
     for n in range(1, 5):
         (off / f"label_{n}_response.json").write_text(json.dumps(LABELS[n]))
-    assert main(["chair-t"]) == 0
+    assert main(["chair-t", "--provider", "offline"]) == 0
     assert "Sample photos" not in (config.OUT_DIR / "chair-t" / "card.html").read_text()
 
 
 def test_stage_without_previous_file_fails_clearly(capsys):
     make_chair()
-    assert main(["chair-t", "--stage", "label"]) == 2
+    assert main(["chair-t", "--stage", "label", "--provider", "offline"]) == 2
     assert "Run --stage extract first" in capsys.readouterr().out

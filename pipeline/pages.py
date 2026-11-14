@@ -5,6 +5,7 @@ import re
 import pymupdf
 
 from app import config
+from . import verify
 from .common import PipelineError, out_dir, read_meta, save_copy, write_json
 
 KEYWORDS = [
@@ -15,7 +16,16 @@ KEYWORDS = [
 # Short words must match whole words ("wh" not in "when", "key" not in "keyboard");
 # the others also match their inflections ("removed", "lifting", "dimensions").
 WHOLE_WORD = {"wh", "key"}
+# The same topics in Chinese (Traditional, then Simplified where it differs), for manuals like the Kovital ones.
+# Chinese has no spaces between words, so these match anywhere.
+KEYWORDS_ZH = [
+    "離合", "离合", "手推", "手動模式", "手动模式", "剎車", "刹車", "刹车", "電池", "电池", "鋰", "锂",
+    "電壓", "电压", "關閉電源", "关闭电源", "關機", "关机", "開關", "开关", "鑰匙", "钥匙", "抬起", "提起",
+    "搬運", "搬运", "運輸", "运输", "飛機", "飞机", "航空", "折疊", "折叠", "拆卸", "拆下", "取下", "卸下",
+    "重量", "尺寸", "警告", "注意",
+]
 SPEC_TERMS = ["specification", "weight", "dimension", "voltage", "kg", "mm", "ah", "wh", "km/h"]
+SPEC_TERMS_ZH = ["技術參數", "技术参数", "規格", "规格", "重量", "尺寸", "電壓", "电压"]
 KEEP_TOP = 15
 MODEL_CHECK_PAGES = 5
 
@@ -25,17 +35,23 @@ def _pattern(word):
     return re.compile(r"\b" + re.escape(word).replace(r"\ ", r"[\s-]*") + tail, re.IGNORECASE)
 
 
-KEYWORD_RES = {k: _pattern(k) for k in KEYWORDS}
-SPEC_RES = [re.compile(r"\b" + re.escape(t) + r"\b", re.IGNORECASE) for t in SPEC_TERMS]
+KEYWORD_RES = {k: _pattern(k) for k in KEYWORDS} | {k: re.compile(re.escape(k)) for k in KEYWORDS_ZH}
+SPEC_RES = ([re.compile(r"\b" + re.escape(t) + r"\b", re.IGNORECASE) for t in SPEC_TERMS]
+            + [re.compile(re.escape(t)) for t in SPEC_TERMS_ZH])
 
 
 def score_page(text):
-    """(distinct keywords found, total matches): pages that touch many topics rank first."""
+    """(distinct keywords found, total matches): pages that touch many topics rank first.
+
+    Scored on normalised text, so a line break inside a word or a Chinese phrase does not hide it.
+    """
+    text = verify.normalise(text)
     counts = [len(r.findall(text)) for r in KEYWORD_RES.values()]
     return sum(1 for c in counts if c), sum(counts)
 
 
 def spec_score(text):
+    text = verify.normalise(text)
     return sum(len(r.findall(text)) for r in SPEC_RES)
 
 

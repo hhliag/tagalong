@@ -43,3 +43,9 @@ def test_wrong_model_only_warns(capsys):
 def test_missing_meta_fails_clearly():
     with pytest.raises(PipelineError, match="meta.yaml"):
         pages.run("nope")
+
+
+def test_chinese_keywords_count_even_across_line_breaks():
+    distinct, _ = pages.score_page("使用前請關閉電\n源，拉起離合器。電池為鋰電池。")
+    assert distinct >= 4   # 關閉電源, 離合, 電池, 鋰
+    assert pages.score_page("清潔：用軟布擦拭。")[0] == 0

@@ -168,8 +168,12 @@ def _call(prompt, images):
     if p == "gemini":
         from google import genai
         from google.genai import types
-        client = genai.Client(api_key=_key("GEMINI_API_KEY"),
-                              http_options=types.HttpOptions(timeout=int(_timeout() * 1000)))
+        http = types.HttpOptions(timeout=int(_timeout() * 1000))
+        if os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower() in ("1", "true", "yes"):
+            # Vertex AI: project + location from .env, login from `gcloud auth application-default login`
+            client = genai.Client(http_options=http)
+        else:
+            client = genai.Client(api_key=_key("GEMINI_API_KEY"), http_options=http)
         parts = [types.Part.from_bytes(data=i.read_bytes(), mime_type=_mime(i)) for i in images]
         resp = client.models.generate_content(
             model=_model(), contents=parts + [prompt],

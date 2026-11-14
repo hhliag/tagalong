@@ -181,3 +181,10 @@ def test_live_provider_retries_once_on_bad_json(monkeypatch, tmp_path):
     assert llm.ask_json("extract", "give json") == {"ok": 1}
     assert "could not be parsed as JSON" in prompts[1]
     assert len(list((tmp_path / "llm_log").glob("*_request.md"))) == 2
+
+
+def test_verify_chinese_quote_across_line_break():
+    norm = verify.normalise_pages({7: "a) 若有電動輪椅車突然移動，請馬上\n關閉電源，否則可能產生未知重大風險。"})
+    c = verify.verify_cited({"value": "x", "page": 7, "quote": "請馬上關閉電源"}, norm)
+    assert c["verified"] is True
+    assert verify.normalise("100kg 殘疾") == verify.normalise("100kg殘疾")
