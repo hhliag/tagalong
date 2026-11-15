@@ -1,6 +1,6 @@
 # TagAlong — Design contract v2 (13 Nov 2026)
 
-v2 replaces v1. It builds only the demo in `claude/15_DEMO.md`. Every build session reads this file first and follows it. If something is unclear, choose the simplest option, write it in `OPEN_QUESTIONS.md`, and keep going.
+v2 replaces v1. Every build session reads this file first and follows it. If something is unclear, choose the simplest option, write it in `OPEN_QUESTIONS.md`, and keep going. Later changes asked for during the build (crew lookup, tap-to-confirm, step bar, roles, card-first passport) are logged there and reflected in §2.
 
 ## 1. What we build
 
@@ -12,15 +12,17 @@ Core rule: **retrieve, don't generate.** The LLM may only copy a step from the m
 
 | Path | What it shows |
 | --- | --- |
-| `/` | Chair picker: 2 or 3 cards (one photo, chair name hidden until the plate is read) |
+| `/` | Problem line, two doors ("I am the passenger" → picker, "I am ramp crew" → `/crew`), chair picker: one photo per chair, name hidden until the plate is read |
 | `/build/{chair_id}` | One "Build the passport" button, then a list of stages that tick as they finish (§4) |
-| `/confirm/{chair_id}` | Photos with numbered labels in gold. Tap ✓ (turns jade) or ✗ (hidden). "Done" when all are decided |
-| `/passport/{chair_id}` | The card: 2 photos with confirmed labels, "Must do" list (≤ 8 steps), each step with label number, trust chip and page link. "More from the manual" folded below. Strip "Same passport, other uses" at the bottom |
+| `/confirm/{chair_id}` | Large photos with lettered rings. Tap cycles grey (not checked) → green (right) → red (wrong) → grey; drag moves a ring; "Check all". "Done" when nothing is grey |
+| `/done/{chair_id}/{chosen\|built\|confirmed}` | Step-done page between the main pages; after "confirmed" it shows the passport QR the ramp handler scans |
+| `/passport/{chair_id}` | A scaled preview of the printed card first, then "The full record": photos with confirmed labels, "How to hold this chair", "Must do" (≤ 8 steps, each with label letter, trust chip and page link), "More from the manual" folded, IATA lines. Items also on the card are tagged "On the card". Strip "The same record also gives" at the bottom |
 | `/manual/{record_id}/{page}?step={step_id}` | The manual page as an image with the quoted sentence marked, and the source link |
-| `/passport/{chair_id}/print` | One printable page (A5 landscape): key facts, 2 photos with labels, ≤ 8 steps, QR to the passport, tag ID |
+| `/passport/{chair_id}/print` | One printable page (A5 landscape): key facts, 2 photos with labels, lifting zones, ≤ 8 steps, QR to the crew view, tag ID |
+| `/crew`, `/crew/{tag_id}` | Ramp crew lookup by tag ID or QR: how to hold the chair first, then photos, must-do steps, battery facts, IATA lines |
 | `/uses/{chair_id}/{use}` | `checkin` (facts + SSR code), `onboard` (phone notification mock), `return` (her checklist). Each has a "Concept" chip |
 
-Every page: "Concept" chip in the corner; "Sample photos. In real use the owner takes them." on build and passport pages.
+Every page: "Concept" chip in the corner and a role chip in the top bar (Owner view, Crew view or Check-in view). Owner pages show a 4-step bar (Choose chair, Build passport, Confirm, Passport). "Sample photos. In real use the owner takes them." on build and passport pages.
 
 ## 3. Data
 
@@ -109,13 +111,13 @@ From IATA guidance for battery-powered mobility aids (label the source):
 
 - "Must do" list first, numbered by phase. Each step: label number (matches the dot on the photo), action, trust chip (`AI-extracted · page verified`, then `Owner-confirmed`), page link.
 - Only confirmed labels appear. A line says how many were hidden.
-- Print layout (A5 landscape, one page): chair name, tag ID, weight, battery type, Wh, power-off method; 2 photos with dots; ≤ 8 steps in large type; QR to `/passport/{chair_id}`; "Return to the aircraft door". Prints correctly from Chrome.
+- Print layout (A5 landscape, one page): chair name, tag ID, weight, battery type, Wh, power-off method; 2 photos with dots; ≤ 8 steps in large type; QR to `/crew/{tag_id}`; "Return to the aircraft door". Prints correctly from Chrome.
 
-## 7. Other uses strip (views of the same record, "Concept" chip on each)
+## 7. "The same record also gives" strip (views of the same record; "Concept" chip on On board and Return check)
 
 | Tile | Shows |
 | --- | --- |
-| Printed card | Link to `/print` |
+| Crew view | Link to `/crew/{tag_id}`, what the card's QR opens (no Concept chip) |
 | On board | A phone notification mock: "Your wheelchair is on board." No real sending. |
 | Check-in | Battery type, V, Ah, Wh (§5.2), removable, power-off method, weight, size, SSR code (§5.1). Each with page link |
 | Return check | Her checklist from confirmed labels + `at_arrival` steps, e.g. "Joystick fitted", "Power on". Buttons "All OK" / "Problem with a part" (stored in the browser only) |
@@ -134,4 +136,4 @@ Do not commit maker PDFs or photos we do not own. They stay in `TAGALONG_DATA_DI
 
 ## 10. Out of scope
 
-Booking page, scan feed, status timeline, photo upload by the user, pin moving, inspector page, OWLv2, 3D, AR, login, real airline integration. Stretch only if everything works: let a judge upload 4 photos of their own chair.
+Booking page, scan feed, status timeline, photo upload by the user, inspector page, OWLv2, 3D, AR, login, real airline integration. Stretch only if everything works: let a judge upload 4 photos of their own chair.

@@ -1,6 +1,6 @@
-# Open questions and decisions
+# Decisions and open questions
 
-Where DESIGN.md was unclear, the simplest option was chosen and written here. Change any of these by editing DESIGN.md. Tidied 14 Nov 2026: superseded entries removed, the rest grouped by topic.
+A build log of decisions. Where DESIGN.md was silent or unclear, the simplest option was chosen and written down here, so every behaviour can be traced to a choice. The first section lists what is still open.
 
 ## Still open (owner's call)
 
